@@ -1,242 +1,286 @@
 # Arquitetura técnica — Projeto de Programação Paralela (K-means)
 
 > **Disciplina:** Programação Paralela (CCO085), IESB — 2026/2  
-> **Problema:** nº 10 — Agrupamento por k-médias, algoritmo de Lloyd  
-> **Referência do estado:** 09/11/2026  
-> **Escopo deste arquivo:** arquitetura **implementada** do sequencial e OpenMP; arquitetura **planejada** do MPI.  
-> **Fonte da verdade operacional:** código e resultados locais em `projeto_pp/`. A publicação dessa reorganização na `main` do GitHub ainda não foi confirmada.
+> **Problema:** nº 10 — Agrupamento por k-médias (K-means), algoritmo de Lloyd  
+> **Estado documentado:** 10/11/2026 — sequencial, OpenMP e MPI implementados e compilados; validações e experimentos registrados.  
+> **Referência operacional:** clone Ubuntu/WSL2 `~/projeto_pp_integracao`, branch local `desenvolvimento/mpi`. A reorganização foi integrada à `main` pelo PR #18 em 10/11/2026. A implementação MPI ainda não foi publicada ou mesclada.
 
-## 1. Objetivo e restrições
+## 1. Objetivo e invariantes do algoritmo
 
-Partir do código sequencial fornecido pelo professor, desenvolver versões paralelas com OpenMP e MPI sem modificar as regras do algoritmo e avaliar corretude e desempenho. O projeto também exige medições e análise de *speedup*, eficiência, escalabilidade e comparação com a Lei de Amdahl.
+Manter o comportamento do código sequencial fornecido pelo professor (`sequencial/10_kmeans.cpp`) e desenvolver implementações paralelas em OpenMP (memória compartilhada) e MPI (processos com espaços de endereçamento separados). Alterações na decomposição do trabalho não devem mudar as regras matemáticas do problema.
 
-**Preservar o código em `sequencial/10_kmeans.cpp` como baseline original.** Versões derivadas podem mudar a organização dos cálculos para paralelizar, mas devem manter as entradas, a inicialização, a regra de atribuição, o recálculo e o resultado exigido. Qualquer mudança de ordem das operações de ponto flutuante precisa de validação explícita.
-
-### Regras e invariantes do baseline
-
-| Item | Comportamento de referência |
+| Elemento | Regra preservada |
 |---|---|
-| Argumentos | `N` (pontos), `K` (clusters), `IT` (iterações); padrões: `1000000`, `8`, `20` |
-| Dados | `N` pontos bidimensionais em `px[i]` e `py[i]`, gerados deterministicamente |
-| Gerador | `uint64_t s = 2024ULL`; atualização `s = s*6364136223846793005ULL + 1` duas vezes por ponto; coordenada `(s >> 40) % 1000`, convertida para `double` |
-| Centroides iniciais | Primeiros `K` pontos (`cx[j] = px[j]`, `cy[j] = py[j]`) |
-| Distância | Quadrado da distância euclidiana: `(px[i]-cx[j])² + (py[i]-cy[j])²` |
-| Desempate | O primeiro centroide com menor distância vence; atualizar apenas com `d < best`, não `<=` |
-| Iterações | Exatamente `IT` ciclos; não há interrupção por convergência |
-| Recálculo | Média aritmética por coordenada dos pontos de cada cluster |
-| Cluster vazio | Centroide permanece inalterado quando `cnt[j] == 0` |
-| Resultado impresso | `N`, `K`, `it`, `checksum=%.4f`, `tempo=%.6f s`; checksum é a soma de `cx[j] + cy[j]` |
-| Região temporizada | Começa antes do laço de iterações e termina depois dele; geração e inicialização ficam fora |
+| Argumentos | `N` pontos, `K` clusters, `IT` iterações; padrões `1000000`, `8`, `20` |
+| Geração | Pontos 2D determinísticos em `double`: estado `uint64_t s=2024ULL`; a cada coordenada, `s=s*6364136223846793005ULL+1`; valor `(s >> 40) % 1000` |
+| Inicialização | Os primeiros `K` pontos são os centroides iniciais |
+| Distância | Euclidiana ao quadrado: `(px[i]-cx[j])²+(py[i]-cy[j])²` |
+| Empates | Vence o centroide de menor índice; troca do melhor somente quando `d < best` |
+| Quantidade de ciclos | Exatamente `IT` iterações, sem parada antecipada |
+| Recálculo | Média das coordenadas de todos os pontos atribuídos ao cluster |
+| Cluster vazio | Preservar o centroide da iteração anterior |
+| Saída | `N`, `K`, `it`, `checksum=%.4f` e `tempo=%.6f s`; o checksum soma `cx[j]+cy[j]` |
+| Cronometragem | Somente o laço iterativo (o trabalho de preparação fica fora da medida reportada) |
 
-O programa original assume entradas coerentes (por exemplo, `N >= K > 0`); não introduzir uma nova semântica de entrada sem registrar e justificar a decisão.
+O baseline assume valores coerentes de entrada. O MPI acrescenta validação explícita de `N >= 1`, `K >= 1`, `K <= N` e `IT >= 0`, abortando a execução distribuída se forem inválidos; esse tratamento de erros é uma diferença de interface, não do cálculo para entradas válidas.
 
-## 2. Ciclo do algoritmo e dependências
+## 2. Etapas, dependências e complexidade
 
-Para cada iteração `it`:
+Em cada iteração de Lloyd:
 
-1. **Atribuição:** para cada ponto `i`, comparar a distância aos `K` centroides correntes e escrever seu rótulo `rotulo[i]`.
-2. **Acumulação:** para cada ponto `i`, somar suas coordenadas e uma unidade na contagem do cluster de `rotulo[i]`.
-3. **Atualização:** para cada cluster não vazio, dividir as somas por sua contagem para obter `cx[j]` e `cy[j]`.
-4. **Sincronização lógica:** a atribuição da iteração seguinte só pode começar quando os novos centroides estiverem prontos.
+1. **Atribuição:** cada ponto recebe o índice do centroide mais próximo. São `K` comparações por ponto; os rótulos são independentes para pontos diferentes.
+2. **Acumulação:** cada ponto contribui para duas somas de coordenadas e uma contagem do seu cluster; somas compartilhadas exigem redução segura.
+3. **Atualização:** cada centroide não vazio é substituído pela média global dos pontos atribuídos a ele.
+4. **Dependência entre iterações:** a iteração seguinte precisa dos centroides atualizados; não é correto sobrepor iterações arbitrariamente.
 
 ```text
-centroides de iteração it
-           |
-           v
-   atribuir N pontos     <- independente por ponto
-           |
-           v
- acumular por cluster    <- compartilhamento / redução necessária
-           |
-           v
- atualizar K centroides  <- depende da acumulação completa
-           |
-           v
- próxima iteração        <- depende dos centroides atualizados
+               Centroides atuais
+                       |
+           +-----------+-----------+
+           |                       |
+       Ponto 0                 Demais pontos
+           |                       |
+           +----> Atribuições <----+
+                       |
+                 Acumulações
+                       |
+            Redução/combinação
+                       |
+              Novos centroides
+                       |
+                Próxima iteração
 ```
 
-A atribuição é naturalmente paralela por ponto, porque cada operação lê os mesmos centroides e escreve somente `rotulo[i]`. O recálculo tem dependência de acumulação: diversos pontos podem atualizar o mesmo cluster. Não é seguro usar uma soma compartilhada sem mecanismos de proteção ou redução.
+- Geração inicial sequencial: `O(N)`, fora do cronômetro.
+- Trabalho por iteração sequencial: `O(NK + N + K)`; em `IT` iterações: `O(IT·(NK + N + K))`.
+- Memória do baseline: `O(N+K)`.
+- No OpenMP, o recálculo usa acumuladores privados, com custo de memória adicional `O(TK)` para `T` threads.
+- No MPI, a computação local é aproximadamente `O(IT·(N/P·K + N/P + K))` para `P` processos, **mais** o custo das coletivas, que depende da implementação MPI, hardware, tamanho das mensagens e sincronização. A distribuição não é necessariamente uniforme quando `N % P != 0`.
 
-### Complexidade
-
-- Geração inicial: `O(N)` (fora do cronômetro do baseline).
-- Por iteração: atribuição `O(NK)`; acumulação `O(N)`; atualização `O(K)`.
-- Região iterativa: `O(IT × (NK + N + K))`, habitualmente `O(IT × N × K)` para `N >= K > 0`.
-- Memória sequencial: `O(N + K)` (coordenadas, rótulos, centroides e acumuladores).
-
-## 3. Estrutura de arquivos local
+## 3. Organização dos fontes e artefatos
 
 ```text
-projeto_pp/
+projeto_pp_integracao/
+├── Makefile
 ├── README.md
 ├── AGENTS.md
-├── AUTORES.md                    # confirmar dados reais dos integrantes
-├── Makefile
-├── .gitignore
-├── sequencial/10_kmeans.cpp     # fonte original de referência
-├── perfilamento/10_kmeans.cpp   # cópia instrumentada para medir fases
-├── openmp/10_kmeans.cpp         # OpenMP efetivamente implementado
-├── mpi/                         # VAZIO em 09/11/2026: ainda não implementado
-├── validacao/
-│   ├── sequencial.cpp            # baseline instrumentado: imprime centroides
-│   └── openmp.cpp                # OpenMP instrumentado: imprime centroides
+├── AUTORES.md
+├── sequencial/10_kmeans.cpp
+├── perfilamento/10_kmeans.cpp
+├── openmp/10_kmeans.cpp
+├── mpi/10_kmeans.cpp
+├── validacao/{sequencial.cpp,openmp.cpp}
 ├── scripts/
-│   ├── medir_baseline.sh
-│   ├── medir_openmp.sh
+│   ├── medir_baseline.sh, medir_openmp.sh, validar_openmp.sh
 │   ├── gerar_graficos_openmp.py
-│   └── validar_openmp.sh
+│   ├── validar_mpi.sh, validar_centroides_mpi.py
+│   ├── medir_mpi.sh, analisar_mpi.py, gerar_graficos_mpi.py
+│   ├── comparar_openmp_mpi.py
+│   ├── medir_escalabilidade_fraca_mpi.sh
+│   └── analisar_escalabilidade_fraca_mpi.py
 ├── resultados/
-│   ├── baseline.csv
-│   ├── resultados_openmp.csv
-│   ├── resumo_openmp.csv
-│   ├── validacao_openmp.csv
-│   └── graficos/                # 9 PNG originais
-├── build/                       # gerado por make; não versionar
-└── docs/
-    ├── ARQUITETURA.md
-    ├── ESTADO_ATUAL.md
-    ├── EXPERIMENTOS.md
-    ├── PROXIMOS_PASSOS.md
-    └── REORGANIZACAO.md
+│   ├── baseline.csv, resultados_openmp.csv, resumo_openmp.csv
+│   ├── resultados_mpi.csv, resumo_mpi.csv
+│   ├── validacao_openmp.csv, validacao_mpi.csv
+│   ├── validacao_centroides_mpi.csv
+│   ├── comparacao_openmp_mpi.csv
+│   ├── escalabilidade_fraca_mpi.csv
+│   ├── resumo_escalabilidade_fraca_mpi.csv
+│   ├── graficos/                # gráficos OpenMP históricos
+│   ├── graficos_mpi/            # 9 gráficos fortes + 1 de escala fraca
+│   └── graficos_comparacao/     # 9 gráficos comparativos
+└── docs/{ARQUITETURA.md,ESTADO_ATUAL.md,EXPERIMENTOS.md,PROXIMOS_PASSOS.md,REORGANIZACAO.md}
 ```
 
-**Nota:** um `resultados/graficos_teste/` pode existir após testar a reprodução dos gráficos. Backups com sufixo `_ANTERIOR` podem existir durante a transição, mas não devem ser confundidos com a versão canônica.
+`build/` contém executáveis locais e é ignorado pelo Git. Esta árvore resume os arquivos relevantes, não todos os arquivos do repositório. Novos arquivos MPI e resultados ainda estavam **não rastreados** pelo Git na última auditoria, embora existam no clone local.
 
-## 4. Baseline e perfilamento — implementados
+## 4. Baseline e perfilamento
 
-**Fonte:** `sequencial/10_kmeans.cpp`. É o código de referência e deve permanecer inalterado.
+**Baseline:** `sequencial/10_kmeans.cpp`, preservado como referência de corretude.  
+**Perfilamento:** `perfilamento/10_kmeans.cpp`, que cronometra separadamente as fases do laço.
 
-**Instrumentação:** `perfilamento/10_kmeans.cpp` adiciona chamadas ao relógio para separar a atribuição e o recálculo. Como há temporizadores adicionais, os tempos do perfilamento não são necessariamente iguais aos do executável original sem instrumentação.
+Uma execução de perfilamento com `N=1000000`, `K=8`, `IT=20` encontrou:
 
-Um teste com `N=1.000.000`, `K=8` e `IT=20` registrou:
-
-| Etapa | Tempo | Participação |
+| Etapa | Tempo (s) | Participação |
 |---|---:|---:|
-| Atribuição | 0,304297 s | 87,38% |
-| Recálculo | 0,043902 s | 12,61% |
-| Total instrumentado | 0,348253 s | 100% |
+| Atribuição | 0,304297 | 87,38% |
+| Recálculo | 0,043902 | 12,61% |
+| Total instrumentado | 0,348253 | aproximadamente 100% |
 
-A atribuição foi o maior *hotspot* nessa execução. **Esses 87,38% não são automaticamente a fração paralelizável exata para a Lei de Amdahl**, porque o recálculo também foi parcialmente paralelizado e há sobrecarga de paralelização, memória e sincronização. A estimativa de Amdahl ainda requer justificativa e confronto com os resultados.
+A atribuição foi o principal *hotspot* **nessa execução**. O percentual de 87,38% não equivale automaticamente à fração paralelizável para a Lei de Amdahl, pois partes do recálculo também foram paralelizadas, e as versões paralelas introduzem comunicação/sincronização.
 
-## 5. OpenMP — implementado e validado nos cenários registrados
+## 5. OpenMP — implementação em memória compartilhada
 
-**Fonte:** `openmp/10_kmeans.cpp`. **Compilação:** `g++ -O2 -std=c++17 -fopenmp`, automatizada por `make openmp`.
+**Fonte:** `openmp/10_kmeans.cpp`. **Compilação:** `g++ -O2 -std=c++17 -fopenmp`.
 
-### 5.1 Atribuição paralela
+### 5.1 Atribuição
 
-```cpp
-#pragma omp parallel for schedule(static)
-for (int i = 0; i < N; i++) {
-    double best = 1e18;
-    int bj = 0;
-    for (int j = 0; j < K; j++) {
-        double dx = px[i] - cx[j], dy = py[i] - cy[j];
-        double d = dx*dx + dy*dy;
-        if (d < best) { best = d; bj = j; }
-    }
-    rotulo[i] = bj;
-}
-```
+Usa `#pragma omp parallel for schedule(static)` para dividir as posições de `rotulo` entre as threads. Cada iteração lê `px`, `py`, `cx`, `cy` e escreve apenas o seu rótulo; portanto não há conflito de escrita entre threads na fase de atribuição. O escalonamento estático é compatível com o número fixo de comparações (`K`) por ponto.
 
-- `schedule(static)` foi escolhido porque o número de comparações por ponto é igual (`K`); o custo efetivo pode variar com o ambiente, mas a carga algorítmica é bem distribuída.
-- `px`, `py`, `cx` e `cy` são lidos durante essa fase; cada thread escreve somente posições distintas de `rotulo`.
-- `best` e `bj` são locais à iteração do laço.
-- Ao fim do `parallel for`, a sincronização garante que os rótulos estejam prontos para o recálculo.
+### 5.2 Acumulação e atualização
 
-### 5.2 Recálculo paralelo com acumuladores por thread
-
-A versão sequencial atualizava `sx[j]`, `sy[j]` e `cnt[j]` para cada ponto. Uma adaptação ingênua com um único conjunto de vetores compartilhados criaria condição de corrida.
-
-A implementação existente usa:
-
-1. `T = omp_get_max_threads()` e três conjuntos de acumuladores indexados por thread (`sx_local`, `sy_local`, `cnt_local`), cada um com `K` posições.
-2. Zera os acumuladores privados por thread no início de cada iteração.
-3. Executa uma região `#pragma omp parallel` com `#pragma omp for schedule(static)`; cada thread atualiza **somente seus vetores locais**.
-4. Após terminar a região paralela, combina os parciais **sequencialmente** para cada cluster e atualiza os centroides não vazios.
+Cada thread acumula em seus próprios vetores `sx_local`, `sy_local` e `cnt_local`, indexados pelo identificador da thread. Após o encerramento da região paralela, os valores são combinados **manualmente e sequencialmente** por cluster, e os centroides são atualizados.
 
 ```cpp
 #pragma omp parallel
 {
     int tid = omp_get_thread_num();
     #pragma omp for schedule(static)
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; ++i) {
         int j = rotulo[i];
         sx_local[tid][j] += px[i];
         sy_local[tid][j] += py[i];
         cnt_local[tid][j]++;
     }
 }
-// Após a região paralela: redução MANUAL das linhas locais por cluster.
+// Combinação manual dos acumuladores e atualização dos centroides.
 ```
 
-**Decisão técnica:** evitar `critical` ou `atomic` em cada atualização de ponto reduz a contenção; aqui **não** se usou literalmente a cláusula `reduction(...)` do OpenMP — a combinação é **manual**, com vetores locais. O encerramento da região `parallel` sincroniza as threads antes da combinação.
+Não afirmar que a implementação usa cláusula `reduction(...)`, `atomic` ou `critical` para a acumulação: a redução é manual. A estratégia evita disputas de atualização por ponto, mas tem custo de criação/sincronização de regiões paralelas e combinação `O(TK)` por iteração. *False sharing* e contenção de memória são hipóteses, não causas diagnosticadas.
 
-**Custos/limitações:** memória adicional `O(TK)`; zerar acumuladores e combiná-los custa `O(TK)` por iteração; as regiões paralelas e barreiras geram overhead. Possível *false sharing* entre pequenos vetores e limitações da largura de banda de memória são hipóteses a testar, **não causas comprovadas**. Não há comparação medida entre `static`, `dynamic` e `guided` ou entre redução manual/`atomic`/`critical`.
+### 5.3 Evidência de corretude e desempenho OpenMP
 
-### 5.3 Corretude registrada
+- **9/9 validações aprovadas:** `N` em {100000,1000000,5000000}, `K=8`, `IT=20`, threads em {1,2,4}; comparação dos centroides finais impressos com `%.17g` usando os programas de `validacao/`.
+- **60 medições de desempenho**, cinco por configuração, mais nove gráficos, preservadas em `resultados/resultados_openmp.csv`, `resultados/resumo_openmp.csv` e `resultados/graficos/`.
+- Para `N=5000000` e 4 threads: tempo médio OpenMP `1,805006 s` contra sequencial `2,243186 s`, speedup aproximado de `1,243×`, eficiência `31,1%`, **nessa campanha**.
 
-Foi criado um código de validação separado (`validacao/sequencial.cpp` e `validacao/openmp.cpp`) que imprime cada coordenada final com `%.17g`. O script `scripts/validar_openmp.sh` compara os arquivos de centroides byte a byte usando `cmp`.
+## 6. MPI — implementação em memória distribuída
 
-- `N = 100.000`, `1.000.000` e `5.000.000`.
-- `K = 8`, `IT = 20` em todos os testes.
-- OpenMP com 1, 2 e 4 threads.
-- **9/9 comparações aprovadas**, registradas em `resultados/validacao_openmp.csv`.
-- Checksums por entrada: `8090.3550`, `8109.0037` e `8099.9055`, respectivamente.
+**Fonte:** `mpi/10_kmeans.cpp`. **Compilação:** `mpic++ -O2 -std=c++17`, via `make mpi` ou `make` (alvo padrão agora inclui MPI). **Estado:** compilação bem-sucedida, execução funcional e testes automatizados de corretude concluídos nos cenários relatados.
 
-Essa evidência confirma igualdade **dos centroides finais impressos** para os cenários testados. O checksum isolado não é prova suficiente e a bateria atual não cobre outros valores de `K`, `IT` ou casos-limite. No conjunto testado, as coordenadas de entrada são números inteiros pequenos representados como `double`; as somas permanecem na faixa de representação exata, favorecendo a igualdade mesmo com outra ordem de acumulação.
+### 6.1 Inicialização e distribuição de dados
 
-### 5.4 Desempenho registrado
+1. `MPI_Init` inicializa o ambiente; cada processo consulta `rank` (`MPI_Comm_rank`) e número total `P` (`MPI_Comm_size`).
+2. O **rank 0** gera os mesmos `N` pontos determinísticos do baseline e seleciona os primeiros `K` como centroides iniciais.
+3. Cada processo calcula as contagens de pontos e os deslocamentos dos `P` blocos **contíguos**, com:
 
-Protocolo do experimento OpenMP original: três entradas, uma execução descartada de aquecimento por configuração, cinco repetições por configuração, baseline sequencial intercalado com OpenMP usando 1/2/4 threads. Dados brutos em `resultados/resultados_openmp.csv` (60 linhas de dados); gráficos em `resultados/graficos/` (9 PNG) e estatísticas em `resultados/resumo_openmp.csv`.
+   ```cpp
+   quantidade[p] = N / P + (p < N % P ? 1 : 0);
+   deslocamento[p] = (p == 0 ? 0 : deslocamento[p-1] + quantidade[p-1]);
+   ```
 
-| N | Sequencial médio | OpenMP 1 | OpenMP 2 | OpenMP 4 |
+4. `MPI_Bcast` compartilha os vetores iniciais `cx` e `cy` a partir do rank 0.
+5. Dois `MPI_Scatterv` distribuem os vetores de coordenadas `px` e `py`, respeitando blocos desiguais quando `N` não é divisível por `P`.
+6. Cada processo mantém somente seus pontos locais para os cálculos seguintes. O rank 0 mantém adicionalmente os vetores globais usados na distribuição.
+
+Há suporte funcional testado para `P > N`, quando alguns processos ficam sem pontos locais. As contagens e deslocamentos do `MPI_Scatterv` são representados por `int`, consistentes com a interface de `N` do programa; não declarar suporte a entradas maiores que os limites desses tipos.
+
+### 6.2 Iteração local e comunicação coletiva
+
+Em cada iteração, cada processo:
+
+1. Percorre os `n_local` pontos e determina os rótulos com o mesmo critério de distância e desempate do baseline.
+2. Zera os vetores de somas `2*K` e contagens `K` e acumula contribuições somente de seus próprios pontos.
+3. Executa **dois `MPI_Allreduce`**: um com `MPI_DOUBLE`/`MPI_SUM` para somas de `x` e `y`; outro com `MPI_LONG`/`MPI_SUM` para contagens por cluster.
+4. Atualiza localmente todos os centroides não vazios com as somas e contagens **globais**. Como `Allreduce` disponibiliza os mesmos agregados em todos os processos, todos começam a próxima iteração com os centroides atualizados, sem um `MPI_Bcast` adicional a cada ciclo.
+
+```text
+                      MPI_Bcast (cx, cy)
+                             |
+                   MPI_Scatterv (px, py)
+                             |
+           +-----------------+-----------------+
+           |                 |                 |
+         Rank 0           Rank 1            Rank P-1
+        pontos locais    pontos locais      pontos locais
+           |                 |                 |
+       atribuição        atribuição         atribuição
+       e somas           e somas            e somas
+           +-----------------+-----------------+
+                             |
+                MPI_Allreduce (somas)
+                MPI_Allreduce (contagens)
+                             |
+             atualiza centroides em cada rank
+                             |
+                próxima iteração (IT vezes)
+```
+
+**Por que `Allreduce`?** A fase de atribuição é independente por ponto, mas os centroides requerem as contribuições de **todos** os processos. A coletiva combina os acumuladores e disponibiliza o resultado em cada processo. Seu custo é pago a cada iteração; portanto, há potencial perda de eficiência para problemas pequenos ou aumento de processos, sem atribuir causalidade exclusiva a esse fator com os dados atuais.
+
+### 6.3 Medição de tempo e saída
+
+A implementação executa `MPI_Barrier` e inicia `MPI_Wtime` **depois** da geração dos dados, da difusão inicial dos centroides e da distribuição `Scatterv`. Ao fim de `IT` ciclos, mede a duração local e usa `MPI_Reduce(..., MPI_MAX, root=0)` para reportar o **maior tempo entre os processos**. Somente o rank 0 imprime a linha com checksum e tempo.
+
+A saída opcional com quarto argumento `--centroides` faz o rank 0 imprimir `CENTROIDE j x y` com `%.17g` para cada cluster; isso é usado para validação individual. A opção não faz parte dos três argumentos originais do baseline.
+
+**Limite da comparação temporal:** os tempos sequencial, OpenMP e MPI representam a fase iterativa, não o custo total da aplicação. Preparação, alocação inicial e distribuição MPI inicial estão fora da região cronometrada. Já as coletivas `Allreduce` de cada ciclo estão dentro dela. Não inferir desempenho fim a fim ou custo completo de comunicação usando apenas o campo `tempo`.
+
+### 6.4 Corretude MPI comprovada nos cenários ensaiados
+
+- `scripts/validar_mpi.sh` registrou **9/9** comparações de checksum para três tamanhos padrão e `P=1,2,4`, em `resultados/validacao_mpi.csv`.
+- Outros testes apresentados no terminal cobriram **9 configurações de distribuição desigual** e **15 testes de casos variados**, totalizando **33/33 verificações de checksum** no conjunto executado.
+- `scripts/validar_centroides_mpi.py` verificou **33/33 configurações** (11 triplas `N,K,IT` vezes `P=1,2,4`) comparando **todos os centroides finais** contra `build/validacao_seq`, com `rel_tol=1e-12` e `abs_tol=1e-10`. O maior erro absoluto reportado foi `0.0` nas coordenadas impressas em 17 dígitos significativos. O CSV está em `resultados/validacao_centroides_mpi.csv`.
+- Foram incluídos `IT=0`, `K=1`, valores pequenos e não divisíveis de `N`, e um caso com `P>N`.
+
+As validações sustentam equivalência **nessas entradas**, não uma prova universal. A equivalência exata observada nos valores impressos não deve ser generalizada para qualquer outro conjunto de dados de ponto flutuante.
+
+### 6.5 Desempenho MPI registrado
+
+**Escalabilidade forte:** `N` constante em {100000,1000000,5000000}, `K=8`, `IT=20`, `P=1,2,4`; cinco repetições por configuração, com sequencial intercalado, totalizando **60 medições** (`resultados/resultados_mpi.csv`). Estatísticas em `resultados/resumo_mpi.csv`; **9 gráficos** em `resultados/graficos_mpi/` (tempo, speedup, eficiência por N).
+
+| N | Sequencial médio (s) | MPI 1 (s) | MPI 2 (s) | MPI 4 (s) |
 |---:|---:|---:|---:|---:|
-| 100.000 | 0,050713 s | 0,051308 s | 0,075015 s | 0,101940 s |
-| 1.000.000 | 0,527968 s | 0,464654 s | 0,638230 s | 0,539434 s |
-| 5.000.000 | 2,243186 s | 2,297215 s | 2,107286 s | 1,805006 s |
+| 100.000 | 0,103463 | 0,092206 | 0,104039 | 0,310480 |
+| 1.000.000 | 0,691980 | 0,669102 | 0,367687 | 0,431920 |
+| 5.000.000 | 2,341218 | 2,316310 | 2,050126 | 1,469368 |
 
-Para `N=5.000.000` e 4 threads, o *speedup* com base nas médias foi aproximadamente `1,243×` e a eficiência foi `31,1%`. **Há variação expressiva entre as repetições**; não concluir que esse ganho será mantido em todo ambiente. O *speedup* do projeto deve usar como referência o **executável sequencial**, nunca simplesmente a versão OpenMP com 1 thread. Mais detalhes: `docs/EXPERIMENTOS.md`.
+Para `N=5000000, P=4`, o speedup médio MPI foi **1,593×**, com eficiência **39,8%**, em comparação ao sequencial da **mesma campanha**.
 
-## 6. MPI — ARQUITETURA PLANEJADA, NÃO IMPLEMENTADA
+**Escalabilidade fraca:** carga de `1.000.000` pontos por processo, com `P=1,2,4`, respectivamente `N=1.000.000`, `2.000.000` e `4.000.000`, cinco repetições por configuração (**15 medições**). Dados em `resultados/escalabilidade_fraca_mpi.csv`, resumo em `resultados/resumo_escalabilidade_fraca_mpi.csv` e gráfico `resultados/graficos_mpi/escalabilidade_fraca_mpi.png`.
 
-**Estado:** a pasta `mpi/` estava vazia na última árvore local informada. Foi discutida uma estratégia MPI na conversa, mas **não há código MPI comprovadamente criado, compilado, testado ou validado**. Não marcar esta frente como concluída.
+| Processos | Tempo médio (s) | Desvio-padrão (s) | Eficiência fraca |
+|---:|---:|---:|---:|
+| 1 | 0,670650 | 0,243925 | 100,0% |
+| 2 | 0,814082 | 0,120106 | 82,4% |
+| 4 | 1,661666 | 0,191052 | 40,4% |
 
-Proposta de decomposição por blocos de pontos:
+A eficiência fraca é `T(1,N0)/T(P,P·N0) × 100%`. Os dados indicam perda de eficiência com 4 processos e dispersão relevante entre repetições. O tempo reportado continua excluindo a distribuição inicial de dados.
 
-1. Processo 0 gera **exatamente os dados originais**, inicializa os mesmos centroides e prepara contagens/deslocamentos por processo.
-2. Distribuir blocos contíguos de `px` e `py` com `MPI_Scatterv` (inclusive quando `N` não for divisível pelo número de processos).
-3. Compartilhar centroides iniciais com `MPI_Bcast`.
-4. Em cada iteração, cada processo atribui os pontos de seu bloco e acumula somas e contagens por cluster em memória local.
-5. Combinar somas e contagens com coletivas como `MPI_Allreduce`; cada processo atualiza os centroides antes da próxima iteração.
-6. Medir o tempo do processo mais lento (por exemplo, com `MPI_Reduce` + `MPI_MAX`), declarar o escopo medido e validar cada centroide contra o baseline.
+## 7. Comparação OpenMP × MPI e limitações metodológicas
 
-**Questões ainda abertas:** sincronização necessária, custos das coletivas, correspondência numérica das somas, balanceamento quando há mais processos que pontos, limite de slots no WSL, tratamento de casos-limite e metodologia justa de comparação de tempo. O baseline cronometra somente iterações; qualquer tempo MPI que também inclua distribuição inicial precisa ser identificado ou analisado em uma métrica separada. Evitar inferir speedup diretamente de medições com `--oversubscribe` sem explicitar essa restrição.
+`resultados/comparacao_openmp_mpi.csv` contém **18 configurações paralelas** (9 OpenMP e 9 MPI); `resultados/graficos_comparacao/` contém nove figuras com comparação de tempo, speedup e eficiência por tamanho de entrada.
 
-## 7. Reproduzir as versões existentes
+**Ressalva essencial:** as campanhas OpenMP e MPI ocorreram em sessões diferentes, com baselines médios diferentes (por exemplo, para `N=100000`: **0,050713 s** no ensaio OpenMP e **0,103463 s** no ensaio MPI). Assim, comparar diretamente os speedups de campanhas diferentes pode induzir a conclusões erradas. Comparações de tempo médio entre as versões também são **preliminares**, pois a carga do sistema e as condições da sessão podem variar. É recomendado realizar uma campanha conjunta, intercalada e controlada, antes de declarar superioridade geral.
 
-Ambiente observado: Windows 11 + VS Code + Ubuntu WSL2; `g++` Ubuntu 15.2.0; 4 unidades de processamento visíveis em `nproc`. Executar na **raiz** de `projeto_pp/`:
+O ambiente confirmado é Windows 11 + Ubuntu/WSL2, `g++` 15.2.0, OpenMPI, `nproc=4`. Os testes MPI usaram `mpirun --oversubscribe`; **isso não demonstra, por si só, que houve oversubscription real**, mas torna importante registrar a alocação efetiva dos processos, os limites de CPU e o ambiente do laboratório. Não atribuir as oscilações apenas a MPI, comunicação ou WSL2 sem medição específica.
+
+Também continuam pendentes: campanha equivalente de escalabilidade fraca OpenMP, identificação mais completa do hardware e discussão quantitativa da Lei de Amdahl. Os dados e a metodologia detalhada estão em `docs/EXPERIMENTOS.md`.
+
+## 8. Compilação, execução e validação
+
+Na raiz do clone Ubuntu:
 
 ```bash
-make
+make clean && make
+# Executáveis gerados: base, omp, perfil, validacao_seq, validacao_omp, mpi
+
 ./build/10_kmeans_base 1000000 8 20
 OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE ./build/10_kmeans_omp 1000000 8 20
-make validacao
+mpirun --oversubscribe -np 4 ./build/10_kmeans_mpi 1000000 8 20
+
 bash scripts/validar_openmp.sh
-python3 scripts/gerar_graficos_openmp.py \
-    resultados/resultados_openmp.csv resultados/graficos_teste
+bash scripts/validar_mpi.sh
+python3 scripts/validar_centroides_mpi.py
+
+python3 scripts/analisar_mpi.py
+python3 scripts/gerar_graficos_mpi.py
+python3 scripts/comparar_openmp_mpi.py
+python3 scripts/analisar_escalabilidade_fraca_mpi.py
 ```
 
-O Makefile atual compila 5 executáveis: `10_kmeans_base`, `10_kmeans_omp`, `10_kmeans_perfil`, `validacao_seq`, `validacao_omp`, todos sob `build/`. A regra `make mpi` está prevista, mas depende de `mpi/10_kmeans.cpp` ainda inexistente. Os scripts de medição foram adaptados para a estrutura com `build/` e passaram na verificação `bash -n`, mas **não houve nova execução integral após a reorganização**.
+As rotinas `medir_mpi.sh` e `medir_escalabilidade_fraca_mpi.sh` **refazem as medições** e escrevem nos CSVs indicados; preservar os resultados históricos antes de reexecutá-las. Os scripts OpenMP de reteste usam nomes de saída próprios.
 
-## 8. Continuidade e documentação cruzada
+## 9. Continuidade, responsabilidades e Git
 
-- **`README.md`:** instruções gerais para colaboradores e execução do zero.
-- **`AGENTS.md`:** regras obrigatórias para futuras IAs/agentes.
-- **`docs/ESTADO_ATUAL.md`:** evidência recente do que está pronto e do que ainda é pendência.
-- **`docs/EXPERIMENTOS.md`:** metodologia e interpretação dos dados; deve ser revisado para a estrutura reorganizada.
-- **`docs/PROXIMOS_PASSOS.md`:** fila priorizada, checklist e handoff entre sessões.
-- **`docs/REORGANIZACAO.md`:** diferenças entre organização local e branches antigas do GitHub.
+- `README.md`: visão geral, comandos para executar e evidências principais.
+- `AGENTS.md`: instruções de continuidade e cautelas para assistentes de programação.
+- `docs/ESTADO_ATUAL.md`: status com evidências de terminal.
+- `docs/EXPERIMENTOS.md`: protocolo, resultados numéricos e limitações.
+- `docs/PROXIMOS_PASSOS.md`: tarefas restantes e preparação de entrega.
+- `docs/REORGANIZACAO.md`: histórico da reestruturação e integração das branches.
+- `AUTORES.md`: divisão de responsabilidades do grupo.
 
-Ao concluir uma etapa: (a) informar arquivos alterados; (b) registrar comando e resultado do teste; (c) atualizar `docs/ESTADO_ATUAL.md` e `docs/PROXIMOS_PASSOS.md`; (d) preservar dados originais; (e) não marcar tarefas sem evidência.
+A reorganização foi publicada na branch `organizacao/kmeans`, com PR [#18](https://github.com/marcusvgarcia-maker/Projeto---PP/pull/18) para `main`. O trabalho MPI permanece na branch local `desenvolvimento/mpi`, derivada de `organizacao/kmeans`. **Antes de criar commit, publicar ou mesclar**, verificar o estado real do repositório, do PR e dos revisores; não sobrescrever mudanças não commitadas nem mesclar histórias antigas sem revisão.
 
-**Próximo trabalho:** revisar `docs/EXPERIMENTOS.md`, conferir `README.md` e o `AUTORES.md`, e depois implementar MPI. Os requisitos oficiais do professor devem prevalecer sobre qualquer sugestão técnica deste documento.
+**Estado final deste documento (10/11/2026):** sequencial, OpenMP e MPI compilados e validados nas configurações descritas; medições e gráficos MPI criados. Pendem análise final de Amdahl, revisão metodológica/experimental, atualização dos próximos passos e integração Git após revisão.
