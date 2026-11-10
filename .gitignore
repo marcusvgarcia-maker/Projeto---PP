@@ -1,0 +1,50 @@
+
+# ========================================
+# Projeto de Programacao Paralela - K-means
+# ========================================
+
+# Executaveis e objetos compilados
+/build/
+*.exe
+*.o
+*.obj
+*.out
+*.a
+*.so
+
+# Executaveis antigos
+10_kmeans
+10_kmeans_base
+10_kmeans_linux
+10_kmeans_omp
+10_kmeans_mpi
+
+# Executaveis antigos de validacao
+/validacao/seq
+/validacao/omp
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Configuracoes locais do editor
+.vscode/
+.idea/
+
+# Arquivos temporarios
+*.swp
+*~
+.DS_Store
+
+# Graficos gerados somente para testes
+/resultados/graficos_teste/
+
+# Versoes antigas de documentos
+*_ANTERIOR.md
+*_ANTIGO.md
+
+# IMPORTANTE:
+# Nao ignorar arquivos CSV ou PNG globalmente.
+# Eles fazem parte das evidencias experimentais.
