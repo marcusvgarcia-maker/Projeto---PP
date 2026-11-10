@@ -8,7 +8,7 @@ BUILD = build
 .PHONY: all baseline openmp perfilamento validacao mpi clean
 
 # Implementacoes atualmente disponiveis
-all: baseline openmp perfilamento validacao
+all: baseline openmp perfilamento validacao mpi
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -40,7 +40,7 @@ $(BUILD)/validacao_seq: validacao/sequencial.cpp | $(BUILD)
 $(BUILD)/validacao_omp: validacao/openmp.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -fopenmp $< -o $@
 
-# MPI — sera utilizado quando o codigo estiver pronto
+# MPI — implementacao disponivel
 mpi: $(BUILD)/10_kmeans_mpi
 
 $(BUILD)/10_kmeans_mpi: mpi/10_kmeans.cpp | $(BUILD)
