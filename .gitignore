@@ -48,3 +48,7 @@ __pycache__/
 # IMPORTANTE:
 # Nao ignorar arquivos CSV ou PNG globalmente.
 # Eles fazem parte das evidencias experimentais.
+
+# Metadados de downloads e backups locais de validacao
+*:Zone.Identifier
+/resultados/backup_validacao_*/
