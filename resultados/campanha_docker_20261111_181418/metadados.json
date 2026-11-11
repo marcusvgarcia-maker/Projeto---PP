@@ -1,0 +1,248 @@
+{
+  "inicio": "2026-11-11T18:14:18.780992-03:00",
+  "estado": "concluida",
+  "argumentos": {
+    "saida": null,
+    "tamanhos": [
+      100000,
+      1000000,
+      5000000
+    ],
+    "workers": [
+      1,
+      2,
+      4
+    ],
+    "modelos": [
+      "sequencial",
+      "openmp",
+      "mpi"
+    ],
+    "repeticoes": 5,
+    "aquecimentos": 1,
+    "n_fraca": 1000000,
+    "k": 8,
+    "it": 20,
+    "timeout": 180,
+    "semente_ordem": 20261111,
+    "observacoes": "",
+    "sem_fraca": false,
+    "sem_analise": false
+  },
+  "git": {
+    "branch": "entrega/finalizacao",
+    "commit": "66e2e16ab971cdadb98d683c3ce316ef79889af6"
+  },
+  "plataforma": "Linux-6.18.58.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "cpu_count": 4,
+  "afinidade_cpu": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "os_release": "PRETTY_NAME=\"Ubuntu 24.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.5 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo",
+  "cpu_modelos": [
+    "Intel(R) Core(TM) i5-5300U CPU @ 2.30GHz"
+  ],
+  "meminfo": {
+    "MemTotal": "8069680 kB",
+    "MemAvailable": "7087128 kB"
+  },
+  "cgroup": {
+    "cpu.max": "max 100000",
+    "cpuset.cpus.effective": "0-3",
+    "memory.max": "max"
+  },
+  "g++": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+  "mpi": "mpirun (Open MPI) 4.1.6\n\nReport bugs to http://www.open-mpi.org/community/help/",
+  "flags": [
+    "-O2",
+    "-std=c++17"
+  ],
+  "OMP_DYNAMIC": "FALSE",
+  "OMP_PROC_BIND": "FALSE",
+  "ambiente_relevante_herdado": {
+    "OMP_WAIT_POLICY": null,
+    "GOMP_SPINCOUNT": null,
+    "OMP_PLACES": null,
+    "OMPI_ALLOW_RUN_AS_ROOT": "1",
+    "OMPI_ALLOW_RUN_AS_ROOT_CONFIRM": "1"
+  },
+  "MPI_argumentos": [
+    "--oversubscribe",
+    "--bind-to",
+    "none"
+  ],
+  "escopo_tempo": "tempo_s = iteracoes reportadas pelo programa; exclui geracao e distribuicao inicial.",
+  "escopo_parede": "tempo_parede_s = duracao externa do subprocesso, incluindo inicializacao e geracao.",
+  "fontes_sha256": {
+    "sequencial/10_kmeans.cpp": "27ae2990e552944cf2c1c351f8b5521c68e3f51822c6b61cdd445e1479f6c511",
+    "openmp/10_kmeans.cpp": "3e6940fc3d2855d6a91c7c92f8e60024eb8205aa6333a49a3e99c327fe6e03df",
+    "mpi/10_kmeans.cpp": "9c983a520e151a82dcb19b19b98e8fa441ce499f19dbc9d7efa68d1653fd9ca4",
+    "validacao/sequencial.cpp": "f3e499f9cc04a7f96e0f77e1c6b2339521d7bb3a4d22fcdc10552a6fda0820d0",
+    "perfilamento/10_kmeans_amdahl.cpp": "764f3db57806e05bbf037ae0e5a12dac1af5bcec40df819a432d272ad28e6d6b",
+    "scripts/medir_campanha_docker.py": "7594ce6b966c59847c6404e8df8a675ef6e5989bd64cc2478b84440323a4f52a",
+    "scripts/analisar_campanha_docker.py": "eb82a7c91ab8ea761f837dd406bfbebef2e0631b75736ae982319be46e8e7c80",
+    "Makefile": "a441c755b6c2c29f575d940c11517b3220486dd91d6ebd7b1eb39354d27df018",
+    "Dockerfile": "f3c1cc778fde929dad23aca2cf4ad14a8a3d04a378d5008286372e7ba862dc90",
+    "docker-compose.yml": "001a62daf943b09c934bfb1e50f12515d357509f8866d16fc6871ecd5d0edfd8"
+  },
+  "validacoes_preexistentes_copiadas": [
+    "validacao_openmp.csv",
+    "validacao_centroides_mpi.csv"
+  ],
+  "checksums": {
+    "100000": "8090.3550",
+    "1000000": "8109.0037",
+    "2000000": "8104.1777",
+    "4000000": "8099.9870",
+    "5000000": "8099.9055"
+  },
+  "perfilador_centroides_validados": [
+    100000,
+    1000000,
+    5000000
+  ],
+  "configuracoes_fortes": [
+    [
+      100000,
+      "sequencial",
+      1
+    ],
+    [
+      100000,
+      "openmp",
+      1
+    ],
+    [
+      100000,
+      "openmp",
+      2
+    ],
+    [
+      100000,
+      "openmp",
+      4
+    ],
+    [
+      100000,
+      "mpi",
+      1
+    ],
+    [
+      100000,
+      "mpi",
+      2
+    ],
+    [
+      100000,
+      "mpi",
+      4
+    ],
+    [
+      1000000,
+      "sequencial",
+      1
+    ],
+    [
+      1000000,
+      "openmp",
+      1
+    ],
+    [
+      1000000,
+      "openmp",
+      2
+    ],
+    [
+      1000000,
+      "openmp",
+      4
+    ],
+    [
+      1000000,
+      "mpi",
+      1
+    ],
+    [
+      1000000,
+      "mpi",
+      2
+    ],
+    [
+      1000000,
+      "mpi",
+      4
+    ],
+    [
+      5000000,
+      "sequencial",
+      1
+    ],
+    [
+      5000000,
+      "openmp",
+      1
+    ],
+    [
+      5000000,
+      "openmp",
+      2
+    ],
+    [
+      5000000,
+      "openmp",
+      4
+    ],
+    [
+      5000000,
+      "mpi",
+      1
+    ],
+    [
+      5000000,
+      "mpi",
+      2
+    ],
+    [
+      5000000,
+      "mpi",
+      4
+    ]
+  ],
+  "configuracoes_fracas": [
+    [
+      1000000,
+      "openmp",
+      1
+    ],
+    [
+      2000000,
+      "openmp",
+      2
+    ],
+    [
+      4000000,
+      "openmp",
+      4
+    ],
+    [
+      1000000,
+      "mpi",
+      1
+    ],
+    [
+      2000000,
+      "mpi",
+      2
+    ],
+    [
+      4000000,
+      "mpi",
+      4
+    ]
+  ],
+  "fim": "2026-11-11T18:17:32.433814-03:00"
+}

@@ -1,0 +1,8 @@
+COMANDO: ["g++", "-O2", "-std=c++17", "/lab/perfilamento/10_kmeans_amdahl.cpp", "-o", "/lab/build/10_kmeans_amdahl"]
+RETORNO: 0
+TIMEOUT: False
+TEMPO_PAREDE_S: 0.597056346
+
+STDOUT:
+
+STDERR:

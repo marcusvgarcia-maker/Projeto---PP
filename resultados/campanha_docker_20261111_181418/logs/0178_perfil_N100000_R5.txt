@@ -1,0 +1,10 @@
+COMANDO: ["/lab/build/10_kmeans_amdahl", "100000", "8", "20"]
+RETORNO: 0
+TIMEOUT: False
+TEMPO_PAREDE_S: 0.039651068
+
+STDOUT:
+N=100000 K=8 it=20  checksum=8090.3550  tempo=0.035174 s
+PERFIL atribuicao_s=0.0312328750015 acumulacao_s=0.00391034799941 total_s=0.035173626
+
+STDERR:

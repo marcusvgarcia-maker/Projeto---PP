@@ -5,10 +5,10 @@ CXXFLAGS = -O2 -std=c++17
 
 BUILD = build
 
-.PHONY: all baseline openmp perfilamento validacao mpi clean
+.PHONY: all baseline openmp perfilamento validacao mpi amdahl clean
 
 # Implementacoes atualmente disponiveis
-all: baseline openmp perfilamento validacao mpi
+all: baseline openmp perfilamento validacao mpi amdahl
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -45,6 +45,12 @@ mpi: $(BUILD)/10_kmeans_mpi
 
 $(BUILD)/10_kmeans_mpi: mpi/10_kmeans.cpp | $(BUILD)
 	$(MPICXX) $(CXXFLAGS) $< -o $@
+
+# Perfilamento adicional para o modelo de Amdahl
+amdahl: $(BUILD)/10_kmeans_amdahl
+
+$(BUILD)/10_kmeans_amdahl: perfilamento/10_kmeans_amdahl.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) $< -o $@
 
 # Remover apenas os executaveis gerados
 clean:
