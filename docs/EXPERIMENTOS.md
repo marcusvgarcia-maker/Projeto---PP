@@ -1,5 +1,8 @@
 # Experimentos e evidências — Projeto PP / K-means
 
+> **Atualizacao confirmada em 11/11/2026:** MPI integrado a main pelo PR #19 (merge d9fb659). O aluno criou a branch local entrega/finalizacao e o commit 852af1d com o ambiente Docker; sua publicacao ainda nao foi demonstrada. No conteiner, seis executaveis compilaram, OpenMP passou em 9/9 comparacoes e MPI em 33/33, com erro maximo 0,0. A campanha conjunta e o novo perfilador foram preparados, mas ainda precisam ser executados na maquina do aluno. Consulte [o roteiro atual](ROTEIRO_CAMPANHA_DOCKER.md). Os registros datados anteriores descrevem as respectivas etapas historicas.
+
+
 > **Data de referência:** 10/11/2026 (America/Sao_Paulo)  
 > **Disciplina:** Programação Paralela (CCO085), IESB, 2026/2 · Problema 10  
 > **Estado:** implementações sequencial, OpenMP e MPI compiladas; validação MPI, escalabilidade forte e fraca e comparação preliminar registradas.  
@@ -249,3 +252,23 @@ python3 scripts/analisar_escalabilidade_fraca_mpi.py
 Ao avaliar um novo resultado, identificar a campanha e os arquivos de origem; conferir N/K/IT e quantidade de workers; distinguir cálculo sobre média de cálculo sobre mediana; utilizar o baseline da mesma campanha; registrar o escopo de tempo cronometrado; preservar a proveniência dos CSVs; não inferir causalidade apenas de diferenças entre tempos. Atualizar `docs/ESTADO_ATUAL.md`, `docs/PROXIMOS_PASSOS.md`, `README.md` e `AGENTS.md` quando houver mudanças de status.
 
 **Documentos relacionados:** `README.md` (execução), `AGENTS.md` (regras para IAs), `docs/ARQUITETURA.md` (método e paralelização), `docs/ESTADO_ATUAL.md` (estado efetivo), `docs/PROXIMOS_PASSOS.md` (fila de trabalho), `docs/REORGANIZACAO.md` (histórico de integração Git).
+
+
+## Campanha conjunta Docker — preparada em 11/11/2026
+
+O protocolo e as hipoteses estao em ROTEIRO_CAMPANHA_DOCKER.md.
+A coleta padrao produz 105 registros fortes, 30 fracos e 15 de perfilamento,
+com aquecimentos separados, ordenacao embaralhada e arquivos exclusivos.
+Os tempos iterativos e a duracao externa sao registrados separadamente.
+O modelo de Amdahl usa atribuicao e acumulacao da copia instrumentada;
+a parcela restante inclui atualizacao, alocacao/desalocacao e instrumentacao.
+E uma estimativa ideal, nao uma fracao serial efetiva medida do paralelo.
+O coletor MPI explicita --oversubscribe --bind-to none, e o OpenMP
+OMP_DYNAMIC=FALSE e OMP_PROC_BIND=FALSE. A configuracao difere das campanhas
+historicas e precisa ser identificada separadamente. As opcoes de afinidade
+estao descritas no manual oficial da serie Open MPI 4.1:
+https://www.open-mpi.org/doc/v4.1/man1/mpirun.1.php
+
+Nenhum numero dessa nova campanha foi produzido ainda na maquina do aluno.
+A discussao final, os graficos finais e a comparacao com a previsao aguardam
+a execucao real do protocolo.

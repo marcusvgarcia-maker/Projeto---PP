@@ -1,5 +1,8 @@
 # AGENTS.md — Contexto de continuidade para IAs e agentes de programação
 
+> **Atualizacao operacional de 11/11/2026:** o PR #19 foi integrado a main em d9fb659. O usuario trabalha na branch local entrega/finalizacao, commit 852af1d, com Dockerfile e Compose registrados e arvore limpa no ultimo retorno. Docker validado: G++ 13.3.0, Open MPI 4.1.6, Ubuntu 24.04.5 LTS; OpenMP 9/9 e MPI 33/33 centroides aprovados. O pacote da campanha conjunta foi preparado para execucao pelo usuario. Esses resultados de desempenho ainda nao foram coletados. Priorize este registro e docs/ROTEIRO_CAMPANHA_DOCKER.md sobre os estados Git antigos abaixo.
+
+
 > **Projeto:** Programação Paralela (CCO085), IESB, semestre 2026/2 — Problema 10, K-means (algoritmo de Lloyd).
 >
 > **Estado confirmado:** 10/11/2026, a partir das saídas de terminal fornecidas pelo usuário.

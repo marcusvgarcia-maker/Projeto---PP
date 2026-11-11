@@ -2,9 +2,38 @@
 
 **IESB · Ciência da Computação · CCO085 · 2026/2**  
 **Problema 10:** agrupamento por k-médias.  
-**Estado documentado:** 10/11/2026 — baseline, OpenMP e MPI implementados; experimentos iniciais concluídos.
+**Estado confirmado:** 11/11/2026 — tres versoes integradas; ambiente Docker compilado e validado pelo aluno. Campanha conjunta e analise final de Amdahl aguardam execucao e discussao.
 
-> **Situação do Git:** o Pull Request [#18](https://github.com/marcusvgarcia-maker/Projeto---PP/pull/18) foi mesclado à `main` em 10/11/2026. Os três commits MPI estão na branch local `desenvolvimento/mpi`, ainda não publicada. O próximo passo é abrir um PR MPI separado contra `main`.
+> **Situacao do Git:** os PRs #18 e #19 foram integrados a main; o merge MPI e d9fb659. A finalizacao prossegue na branch local entrega/finalizacao. O commit 852af1d registra Dockerfile, Compose e exclusoes locais. A publicacao dessa branch e dos novos arquivos da campanha ainda precisa ser demonstrada.
+
+
+## Docker validado e nova campanha
+
+Ambiente informado pelo aluno: Ubuntu 24.04.5 LTS, G++ 13.3.0, Open MPI 4.1.6,
+Matplotlib 3.6.3; Intel Core i5-5300U com 2 nucleos e 4 processadores logicos.
+Memoria total visivel no Linux: aproximadamente 7,70 GiB. Esses dados nao
+substituem a identificacao das condicoes das campanhas historicas.
+
+Na raiz do projeto, pelo terminal Ubuntu do host:
+
+~~~bash
+docker compose build pp-lab
+docker compose run --rm pp-lab
+~~~
+
+Dentro do conteiner, em /lab:
+
+~~~bash
+python3 scripts/medir_campanha_docker.py
+~~~
+
+O coletor usa uma pasta nova por campanha, recompila os programas utilizados,
+faz aquecimentos e cinco rodadas, embaralha a ordem das variantes, coleta
+escalabilidade forte/fraca, valida o perfilador adicional por centroides e
+gera a estimativa ideal de Amdahl. Os resultados reais ainda precisam ser
+coletados na maquina do aluno e discutidos.
+
+Veja [o protocolo completo](docs/ROTEIRO_CAMPANHA_DOCKER.md).
 
 ## Objetivo e preservação do baseline
 
@@ -75,11 +104,11 @@ projeto_pp_integracao/
 └── docs/                     # arquitetura, estado, experimentos e próximos passos
 ```
 
-`build/` é gerado por `make` e está no `.gitignore`. Os CSVs e PNGs das campanhas são evidências do projeto e devem ser preservados. A pasta `mpi/` foi implementada na branch `desenvolvimento/mpi`; não suponha que já esteja disponível na `main`.
+`build/` é gerado por `make` e está no `.gitignore`. Os CSVs e PNGs das campanhas são evidências do projeto e devem ser preservados. A pasta mpi/ ja esta integrada a main pelo PR #19.
 
 ## Ambiente e compilação
 
-Desenvolvimento no **Windows 11 / Ubuntu WSL2**, com `g++` Ubuntu 15.2.0, OpenMP e Open MPI (`mpic++`). Os testes utilizaram até quatro processos MPI, com `mpirun --oversubscribe`. `nproc` indicou quatro unidades de processamento disponíveis; isso não comprova quatro núcleos físicos. O clone de integração está em `~/projeto_pp_integracao`.
+**Campanhas historicas:** Windows 11 / Ubuntu WSL2, com g++ Ubuntu 15.2.0, OpenMP e Open MPI (mpic++). Os testes utilizaram até quatro processos MPI, com `mpirun --oversubscribe`. `nproc` indicou quatro unidades de processamento disponíveis; isso não comprova quatro núcleos físicos. O clone de integração está em `~/projeto_pp_integracao`.
 
 Na raiz do clone:
 
@@ -185,6 +214,6 @@ Consultar `AGENTS.md`, `docs/ESTADO_ATUAL.md`, `docs/ARQUITETURA.md`, `docs/EXPE
 - Realizar, se possível, medições controladas conjuntas de sequencial, OpenMP e MPI; registrar hardware e contexto experimental.
 - Verificar a reprodutibilidade da compilação e dos testes em um clone limpo e, se possível, no laboratório.
 - Revisar a autoria e as contribuições reais com os integrantes; preparar a demonstração e a arguição cruzada.
-- Os três commits MPI foram criados em `desenvolvimento/mpi`. Resta publicar a branch e abrir um Pull Request separado para `main`, preservando as branches históricas.
+- Os tres commits MPI ja foram integrados a main. Falta concluir a campanha, revisar a documentacao final e publicar/revisar a branch entrega/finalizacao.
 
 **Marco 2:** entrega indicada para 12/11/2026. **Apresentação:** 19 ou 26/11/2026, conforme a escala do grupo. Manter os três fontes, Makefile, scripts, CSVs, gráficos, README e `AUTORES.md` disponíveis no repositório exigido pelo professor.

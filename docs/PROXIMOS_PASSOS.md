@@ -1,5 +1,8 @@
 # Próximos passos e transferência de contexto — Projeto PP / K-means
 
+> **Atualizacao confirmada em 11/11/2026:** MPI integrado a main pelo PR #19 (merge d9fb659). O aluno criou a branch local entrega/finalizacao e o commit 852af1d com o ambiente Docker; sua publicacao ainda nao foi demonstrada. No conteiner, seis executaveis compilaram, OpenMP passou em 9/9 comparacoes e MPI em 33/33, com erro maximo 0,0. A campanha conjunta e o novo perfilador foram preparados, mas ainda precisam ser executados na maquina do aluno. Consulte [o roteiro atual](ROTEIRO_CAMPANHA_DOCKER.md). Os registros datados anteriores descrevem as respectivas etapas historicas.
+
+
 > **Data de referência:** 10/11/2026 (horário de Brasília).  
 > **Projeto:** IESB · Ciência da Computação · CCO085 · 2026/2 · Problema 10 — K-means (algoritmo de Lloyd).  
 > **Repositório:** https://github.com/marcusvgarcia-maker/Projeto---PP  
@@ -153,3 +156,17 @@ Ao terminar cada sessão, registrar: data, branch, arquivos alterados, comandos 
 - **Documentação restante:** copiar e confirmar este `docs/PROXIMOS_PASSOS.md`.
 - **Confirmado:** PR #18 integrado à `main` e três commits MPI criados localmente. **Pendente:** publicação e PR MPI, análise final de Amdahl, comparação controlada de desempenho e teste no laboratório.
 - **Próxima ação:** instalar o documento, verificar `git diff --check` e `git diff --stat`, fazer auditoria de conteúdo e então preparar commits sem perder os novos arquivos.
+
+
+## Handoff — 11/11/2026, America/Sao_Paulo
+
+- Estado informado pelo usuario: branch entrega/finalizacao, commit 852af1d, arvore limpa.
+- PR #19 integrado a main, merge d9fb659. Dockerfiles ainda nao aparecem na main consultada.
+- Confirmado no Docker do aluno: seis compilacoes; OpenMP 9/9 e MPI 33/33 centroides, erro maximo 0,0; Matplotlib 3.6.3.
+- Preparado nesta etapa: coletor conjunto, analisador, perfilador sequencial adicional e roteiro.
+- O baseline, OpenMP, MPI e CSVs historicos permanecem inalterados.
+- Teste tecnico do pacote em outro executor: coleta real sequencial/OpenMP, analise automatica e comparacao individual do novo perfilador com o baseline. Isso nao constitui a campanha do aluno.
+- Nao executado pelo assistente: nova campanha completa no Docker do aluno, incluindo MPI.
+- Proxima acao: copiar o pacote para o repositorio, revisar e registrar as mudancas reais; dentro do conteiner executar python3 scripts/medir_campanha_docker.py e enviar o ZIP gerado.
+- Amdahl: instrumentacao e formulas preparadas; valores finais e discussao permanecem pendentes ate a coleta.
+- Preservar as campanhas antigas, registrar condicoes de energia/carga e revisar o relatorio gerado antes da entrega.

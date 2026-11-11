@@ -1,5 +1,8 @@
 # Arquitetura técnica — Projeto de Programação Paralela (K-means)
 
+> **Atualizacao confirmada em 11/11/2026:** MPI integrado a main pelo PR #19 (merge d9fb659). O aluno criou a branch local entrega/finalizacao e o commit 852af1d com o ambiente Docker; sua publicacao ainda nao foi demonstrada. No conteiner, seis executaveis compilaram, OpenMP passou em 9/9 comparacoes e MPI em 33/33, com erro maximo 0,0. A campanha conjunta e o novo perfilador foram preparados, mas ainda precisam ser executados na maquina do aluno. Consulte [o roteiro atual](ROTEIRO_CAMPANHA_DOCKER.md). Os registros datados anteriores descrevem as respectivas etapas historicas.
+
+
 > **Disciplina:** Programação Paralela (CCO085), IESB — 2026/2  
 > **Problema:** nº 10 — Agrupamento por k-médias (K-means), algoritmo de Lloyd  
 > **Estado documentado:** 10/11/2026 — sequencial, OpenMP e MPI implementados e compilados; validações e experimentos registrados.  
