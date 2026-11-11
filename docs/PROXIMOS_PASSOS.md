@@ -11,12 +11,15 @@
 
 ## Entrega do Marco 2 — 12/11/2026
 
-1. Aplicar o patch de fechamento na branch entrega/finalizacao, revisar o diff
-   e executar make amdahl para conferir o alvo auxiliar acrescentado.
-2. Registrar a documentação e a pasta completa da campanha em um commit.
-3. Publicar a branch com git push -u origin entrega/finalizacao.
-4. Abrir/revisar o PR contra main; conferir os arquivos e a participação real do grupo.
-5. Integrar a versão final e enviar o link pelo canal solicitado pelo professor.
+- [x] Preparar e validar o ambiente Docker.
+- [x] Executar e auditar a campanha experimental.
+- [x] Incorporar a documentação, os resultados e os gráficos.
+- [x] Registrar os commits de finalização.
+- [x] Publicar a branch `entrega/finalizacao` no GitHub.
+- [ ] Confirmar a compilação do alvo `make amdahl`, caso ainda não tenha sido testado.
+- [ ] Abrir e revisar o Pull Request final contra `main`.
+- [ ] Integrar o Pull Request após a revisão.
+- [ ] Enviar o link da entrega pelo canal solicitado pelo professor.
 
 Não criar commits fictícios ou alterar autoria para simular participação.
 As contribuições registradas devem corresponder ao trabalho efetivo.
@@ -28,7 +31,7 @@ Testar em Linux do laboratório quando possível. Ensaiar baseline, OpenMP,
 MPI, gráfico de speedup e questões de outra frente. A defesa individual
 deve ocorrer sem apoio de colegas ou IA, conforme o enunciado.
 
-## Handoff — 11/11/2026, America/Sao_Paulo
+## Registro de auditoria — 11/11/2026, America/Sao_Paulo
 
 - Estado de entrada: branch entrega/finalizacao, commit da campanha 66e2e16ab971cdadb98d683c3ce316ef79889af6.
 - Dados recebidos: campanha_docker_20261111_181418_para_enviar.zip.
@@ -37,8 +40,7 @@ deve ocorrer sem apoio de colegas ou IA, conforme o enunciado.
 - Estatísticas: 21 configurações fortes, 6 fracas, 3 perfis e 18 previsões conferidos.
 - Evidências: resultados/campanha_docker_20261111_181418/ e docs/RESULTADOS_FINAIS_DOCKER.md.
 - Preparado: documentação final, roteiro de demonstração e alvo Makefile amdahl.
-- Não realizado pelo assistente: executar na máquina física do aluno, publicar
-  a branch local, integrar o PR, enviar o link ao professor ou testar no laboratório.
-- Próxima ação exata: aplicar o patch, conferir make amdahl e registrar os arquivos.
+- Estado atualizado: documentação consolidada no commit `5d262e0` e branch `entrega/finalizacao` publicada.
+- Próxima ação: revisar o PR final contra `main`, concluir as verificações restantes e preparar a entrega ao professor.
 - Limites: energia/carga manuais não registradas; fraca e entradas pequenas com
   alta dispersão; nenhuma atribuição causal isolada a false sharing/comunicação.
