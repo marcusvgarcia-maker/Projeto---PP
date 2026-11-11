@@ -1,106 +1,95 @@
 # Estado atual do projeto — Programação Paralela / K-means
 
-> **Data de referência:** 09/11/2026 (horário de Brasília).  
+> **Data de referência:** 10/11/2026 (horário de Brasília).  
 > **Disciplina:** CCO085 — Programação Paralela, IESB, 2026/2.  
-> **Problema:** nº 10, agrupamento por k-médias (*K-means*, algoritmo de Lloyd).  
-> **Pasta de trabalho local:** `projeto_pp/` — Windows 11, VS Code e Ubuntu pelo WSL2.  
-> **Repositório remoto:** https://github.com/marcusvgarcia-maker/Projeto---PP  
-> **Regra de leitura:** este documento registra **resultados relatados e confirmados por saídas de terminal nesta colaboração**. Não significa que tudo já tenha sido publicado na branch `main` do GitHub. Confirme o estado real dos arquivos e do Git antes de modificá-los.
+> **Problema:** nº 10 — agrupamento por k-médias (K-means, algoritmo de Lloyd).  
+> **Repositório:** https://github.com/marcusvgarcia-maker/Projeto---PP  
+> **Clone de integração utilizado:** `~/projeto_pp_integracao`, no Ubuntu/WSL2.  
+> **Critério:** este documento registra resultados confirmados por saídas de terminal; não pressupõe que mudanças locais tenham sido publicadas no GitHub.
 
-## 1. Objetivo, condições e entrega
+## 1. Objetivo, invariantes e entrega
 
-O grupo deve manter a implementação sequencial fornecida pelo professor como referência de comportamento e desenvolver as versões paralelas **OpenMP** e **MPI**, validando os resultados e avaliando tempo, *speedup*, eficiência, escalabilidade forte e fraca, com discussão da Lei de Amdahl e dos custos reais da paralelização.
+Manter o algoritmo sequencial fornecido pelo professor, desenvolver versões paralelas em OpenMP e MPI, verificar a equivalência dos resultados e estudar tempo, *speedup*, eficiência, escalabilidade forte/fraca, overhead e Lei de Amdahl.
 
-A entrega do **Marco 2 está prevista para 12/11/2026**. O documento do professor exige um repositório Git com as três implementações em diretórios separados, um `Makefile`, um script gerador de CSV, gráficos, um `README.md` e um `AUTORES.md`, além da análise experimental. As apresentações estão previstas para 19 e 26/11/2026. **Não há exigência explícita de um PDF final separado para o Marco 2**; o Marco 1 exigia um PDF com até seis páginas. A documentação técnica adicional é útil, mas não substitui os artefatos obrigatórios.
+**Marco 2:** data indicada de entrega em **12/11/2026**. Seminários previstos para **19 ou 26/11/2026**, de acordo com a escala do grupo. Entre os artefatos exigidos estão código sequencial/OpenMP/MPI separado, Makefile, scripts para CSV, gráficos, README e AUTORES. O documento do professor não estabeleceu, nas informações disponíveis, um novo PDF separado como requisito do Marco 2.
 
-### Restrições do baseline
+Invariantes do baseline, que não deve ser alterado: entrada `N K IT` (padrões `1000000 8 20`); pontos 2D gerados deterministicamente com semente `2024ULL`; primeiros `K` pontos como centroides iniciais; distância euclidiana ao quadrado; empate resolvido em favor do primeiro centroide; exatamente `IT` iterações; clusters vazios preservam o centroide; cronômetro apenas do laço iterativo. O checksum com quatro casas decimais é útil para triagem, mas **não substitui a validação de centroides individuais**.
 
-- Entrada: `N`, `K`, `IT` (padrões de 1.000.000, 8 e 20).
-- Pontos bidimensionais gerados deterministicamente, com semente `2024ULL` e o gerador original.
-- Centroides iniciais: primeiros `K` pontos.
-- Atribuição pelo quadrado da distância euclidiana; desempate pelo primeiro centroide (`d < best`).
-- Exatamente `IT` iterações, sem parada antecipada por convergência.
-- Se um cluster fica vazio, seu centroide não é atualizado.
-- O cronômetro do baseline cobre as **iterações**, excluindo a geração inicial dos pontos.
-- **Não modificar a lógica do código sequencial de referência.** O checksum de quatro casas decimais não é prova suficiente de corretude; comparar também os centroides.
+## 2. Quadro de situação confirmado
 
-## 2. Resumo de status
-
-| Área | Estado em 09/11/2026 | Evidência e ressalvas |
+| Área | Situação em 10/11/2026 | Evidência |
 |---|---|---|
-| Baseline sequencial | **Concluído no escopo testado** | Compila com `make`, executa e produz `checksum=8109.0037` para `N=1000000 K=8 IT=20` |
-| Perfilamento | **Realizado; interpretação preliminar** | Uma medição mostrou atribuição 87,38% e recálculo 12,61%; repetir/aperfeiçoar se houver tempo |
-| Medições do baseline | **Realizadas** | 15 medições originais: três N × cinco repetições; CSV preservado |
-| OpenMP | **Implementado e compilado** | Atribuição paralela e recálculo com acumuladores privados por thread |
-| Validação OpenMP | **Aprovada (9/9)** | `scripts/validar_openmp.sh` executado após reorganização; `resultados/validacao_openmp.csv` registrado |
-| Medições OpenMP | **Realizadas** | 60 medições originais, com 1, 2 e 4 threads e baseline intercalado |
-| Gráficos OpenMP | **Gerados e regeneração testada** | Nove PNGs originais preservados; teste produziu 9 PNGs + resumo CSV em `resultados/graficos_teste/` |
-| Scripts de medição reorganizados | **Sintaxe verificada; execução completa pendente** | `bash -n` passou para os dois scripts; não afirmar que os retestes foram executados |
-| `Makefile` | **Criado e testado** | `make` compilou cinco executáveis; baseline e OpenMP executados com sucesso |
-| Documentação para IA | **Em atualização** | `AGENTS.md` atualizado e verificado; README revisado foi preparado, mas a substituição ainda não foi explicitamente confirmada nesta conversa |
-| `AUTORES.md` | **Pendente de conferência/preenchimento** | Confirmar integrantes e papéis técnicos reais |
-| MPI | **Não implementado na pasta local confirmada** | Diretório `mpi/` estava vazio na última árvore apresentada; código sugerido em conversa não equivale a implementação salva/testada |
-| Escalabilidade forte/fraca e Amdahl | **Pendentes de conclusão formal** | Não confundir perfilamento com estimativa completa da fração paralelizável |
-| Publicação da nova organização | **Não confirmada** | Nenhuma integração ao GitHub foi comprovada após a reorganização local |
+| Sequencial | Compilado e preservado | `sequencial/10_kmeans.cpp`; `make` |
+| Perfilamento | Executado, com interpretação preliminar | Atribuição 87,38%, recálculo 12,61% em uma medição |
+| OpenMP | Implementado e compilado | `openmp/10_kmeans.cpp`; `build/10_kmeans_omp` |
+| Corretude OpenMP | **9/9 aprovados** | `scripts/validar_openmp.sh`; `resultados/validacao_openmp.csv` |
+| Experimentos OpenMP | **60 medições** e 9 gráficos originais | `resultados/resultados_openmp.csv`; `resultados/graficos/` |
+| MPI | **Implementado e compilado** | `mpi/10_kmeans.cpp`; `build/10_kmeans_mpi` |
+| Corretude MPI por checksum | **33/33 comparações aprovadas** nos cenários executados | 9 casos padrão em `resultados/validacao_mpi.csv` e 24 testes adicionais relatados no terminal |
+| Corretude MPI por centroide | **33/33 casos aprovados** | `scripts/validar_centroides_mpi.py`; `resultados/validacao_centroides_mpi.csv` |
+| Escalabilidade forte MPI | **60 medições**, 9 gráficos | `resultados/resultados_mpi.csv`; `resultados/resumo_mpi.csv`; `resultados/graficos_mpi/` |
+| Comparação OpenMP × MPI | Preliminar: **18 configurações e 9 gráficos** | `resultados/comparacao_openmp_mpi.csv`; `resultados/graficos_comparacao/` |
+| Escalabilidade fraca MPI | **15 medições**, resumo e gráfico | `resultados/escalabilidade_fraca_mpi.csv`; `resultados/resumo_escalabilidade_fraca_mpi.csv` |
+| Makefile | **Seis executáveis compilados via `make clean && make`** | Sequencial, perfilamento, OpenMP, MPI e dois validadores |
+| Documentação | README e AGENTS atualizados localmente; documentos de `docs/` ainda em revisão | `git diff --stat` e cabeçalhos conferidos |
+| Publicação MPI | **Pendente** | Branch local `desenvolvimento/mpi`; novos arquivos ainda não rastreados no último `git status` |
+| Amdahl, controle experimental e preparação final | **Pendentes** | Não há avaliação teórica/empírica final consolidada |
 
-## 3. Estrutura local de referência
+A marcação **aprovado** significa apenas que o conjunto de casos efetivamente executado passou; não constitui prova universal do algoritmo.
 
-A estrutura abaixo resulta da listagem do Explorador/terminal apresentada pelo desenvolvedor **mais alterações cuja execução foi confirmada posteriormente**. Alguns nomes de documentos devem ser conferidos no disco antes de assumir que foram substituídos.
+## 3. Estrutura relevante do clone de integração
 
 ```text
-projeto_pp/
-├── .gitignore
-├── AGENTS.md                 # atualizado e confirmado por head/grep
-├── README.md                 # versão nova preparada; confirmar substituição
-├── AUTORES.md                # confirmar renomeação e preenchimento
-├── Makefile                  # criado e testado
-├── sequencial/
-│   └── 10_kmeans.cpp
-├── perfilamento/
-│   └── 10_kmeans.cpp
-├── openmp/
-│   └── 10_kmeans.cpp
-├── mpi/                      # ainda vazio
-├── validacao/
-│   ├── sequencial.cpp
-│   ├── openmp.cpp
-│   └── *.txt                 # saídas antigas, podem ter sido sobrescritas
+projeto_pp_integracao/
+├── README.md
+├── AGENTS.md
+├── AUTORES.md
+├── Makefile
+├── sequencial/10_kmeans.cpp
+├── perfilamento/10_kmeans.cpp
+├── openmp/10_kmeans.cpp
+├── mpi/10_kmeans.cpp
+├── validacao/{sequencial.cpp,openmp.cpp}
 ├── scripts/
+│   ├── validar_openmp.sh
+│   ├── validar_mpi.sh
+│   ├── validar_centroides_mpi.py
 │   ├── medir_baseline.sh
 │   ├── medir_openmp.sh
+│   ├── medir_mpi.sh
+│   ├── analisar_mpi.py
 │   ├── gerar_graficos_openmp.py
-│   └── validar_openmp.sh
+│   ├── gerar_graficos_mpi.py
+│   ├── comparar_openmp_mpi.py
+│   ├── medir_escalabilidade_fraca_mpi.sh
+│   └── analisar_escalabilidade_fraca_mpi.py
 ├── resultados/
 │   ├── baseline.csv
-│   ├── resultados_openmp.csv
-│   ├── resumo_openmp.csv
-│   ├── validacao_openmp.csv
-│   ├── graficos/             # nove PNG originais
-├── build/                    # executáveis gerados por make; não versionar
-└── docs/
-    ├── ARQUITETURA.md
-    ├── ESTADO_ATUAL.md        # este documento, após substituição
-    ├── EXPERIMENTOS.md
-    ├── PROXIMOS_PASSOS.md
-    └── REORGANIZACAO.md
+│   ├── resultados_openmp.csv, resumo_openmp.csv, validacao_openmp.csv
+│   ├── resultados_mpi.csv, resumo_mpi.csv, validacao_mpi.csv
+│   ├── validacao_centroides_mpi.csv
+│   ├── comparacao_openmp_mpi.csv
+│   ├── escalabilidade_fraca_mpi.csv, resumo_escalabilidade_fraca_mpi.csv
+│   ├── graficos/                 # OpenMP original
+│   ├── graficos_mpi/             # 9 de forte + 1 de fraca
+│   └── graficos_comparacao/      # 9 de comparação
+├── docs/
+│   ├── ARQUITETURA.md
+│   ├── ESTADO_ATUAL.md
+│   ├── EXPERIMENTOS.md
+│   ├── PROXIMOS_PASSOS.md
+│   └── REORGANIZACAO.md
+└── build/                        # compilado; ignorado pelo Git
 ```
 
-**Organização local confirmada em 09/11/2026:** os arquivos `README_PROPOSTO.md` e `AUTORES_MODELO.md` foram substituídos por `README.md` e `AUTORES.md`, respectivamente. O documento de autores contém os nomes, matrículas e responsabilidades dos três integrantes.
+Esta árvore é um resumo funcional, não um inventário exaustivo. Os novos scripts/artefatos MPI, no último `git status`, constavam como **não rastreados**; sua presença local foi confirmada, mas ainda não um commit.
 
-A auditoria local confirmou a presença dos 14 arquivos essenciais verificados. Os documentos antigos foram retirados da estrutura principal, e os gráficos de teste foram separados dos resultados oficiais.
+## 4. Ambiente e compilação
 
-A organização local está concluída, mas ainda não foi integrada à branch `main` do GitHub. A implementação MPI também permanece pendente.
-
-## 4. Ambiente e compilação confirmados
-
-- Host Windows 11 com VS Code, terminal Ubuntu via WSL2.
-- `g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0` e OpenMPI instalados.
-- `nproc` retornou `4`.
-- `mpirun --oversubscribe -np 4 /bin/echo MPI_OK` produziu quatro linhas `MPI_OK`.
-- `mpirun` **sem** `--oversubscribe` apresentou erro de alocação de slots; houve também falhas ao localizar arquivos de ajuda PRRTE/PMIx. Investigar antes dos experimentos de desempenho MPI. Não tratar `--oversubscribe` como configuração ideal de benchmark.
-- O código está em `/mnt/c/.../projeto_pp` (sistema de arquivos do Windows acessado pelo WSL), o que deve ser registrado nas condições experimentais.
-
-`make` produziu, sem erros, estes cinco arquivos:
+- Windows 11, VS Code e Ubuntu via **WSL2**, com repositório de integração sob `/home/thinkpad/projeto_pp_integracao` (sistema de arquivos Linux, diferente da antiga pasta em `/mnt/c`).
+- `g++` Ubuntu 15.2.0, C++17, `-O2`, OpenMP com `-fopenmp`; `mpic++` / OpenMPI no MPI. `nproc` retornou quatro unidades de processamento disponíveis — não necessariamente quatro núcleos físicos.
+- Execução MPI com `mpirun --oversubscribe -np P`; o uso desse parâmetro **não comprova** que houve oversubscription física, mas precisa constar na metodologia. Houve anteriormente aviso de arquivos de ajuda PRRTE/PMIx no `mpirun --version`, sem impedir os testes práticos.
+- Em 10/11, `make clean && make` gerou sem erros:
 
 ```text
 build/10_kmeans_base
@@ -108,116 +97,116 @@ build/10_kmeans_omp
 build/10_kmeans_perfil
 build/validacao_seq
 build/validacao_omp
+build/10_kmeans_mpi
 ```
 
-O alvo `mpi` foi preparado no Makefile, mas **não integra o alvo padrão `all` enquanto o fonte MPI não existir**.
+O alvo padrão `all` do `Makefile` passou a incluir `mpi` nesta fase.
 
-Testes feitos após a reorganização, para `N=1000000 K=8 IT=20`:
+## 5. Implementações e corretude
 
-| Executável | Configuração | Tempo observado | Checksum |
-|---|---|---:|---:|
-| Sequencial | execução 1 | 0,390819 s | 8109.0037 |
-| Sequencial | execução 2 | 0,372863 s | 8109.0037 |
-| OpenMP | 1 thread | 0,598412 s | 8109.0037 |
-| OpenMP | 2 threads | 0,399357 s | 8109.0037 |
-| OpenMP | 4 threads | 0,408286 s | 8109.0037 |
+### OpenMP
 
-Essas execuções são **testes funcionais isolados**, não novos resultados estatísticos finais.
+Atribuição paralela com `#pragma omp parallel for schedule(static)`; acumulação em estruturas privadas por thread; redução manual de somas e contagens; atualização dos centros antes da iteração seguinte. Os testes para N = 100.000, 1.000.000 e 5.000.000, K = 8 e IT = 20, em 1/2/4 threads, passaram **9/9 comparações de centroides** com o baseline.
 
-## 5. Perfilamento, medições e interpretação
+### MPI
 
-### Perfilamento original
+O processo 0 gera os pontos e inicializa os centroides. A distribuição usa `MPI_Scatterv` com blocos contíguos, inclusive para divisões não exatas; os centroides iniciais são transmitidos por `MPI_Bcast`. Cada processo executa atribuição e acumulação locais. A cada iteração, `MPI_Allreduce` combina coordenadas e contagens para atualizar os centroides em todos os processos. A duração reportada é o **máximo** dos tempos locais, reduzidos com `MPI_Reduce` e `MPI_MAX`.
 
-Entrada `N=1000000 K=8 IT=20`:
+**Escopo do cronômetro MPI:** inicia após a distribuição inicial dos pontos e uma barreira; cobre as iterações, inclusive reduções coletivas, e exclui geração dos dados, `MPI_Scatterv`, transmissões iniciais e inicialização do ambiente MPI. Trata-se de tempo da região iterativa, **não** do programa completo.
 
-| Fase | Tempo | Parcela observada |
-|---|---:|---:|
-| Atribuição | 0,304297 s | 87,38% |
-| Recálculo | 0,043902 s | 12,61% |
-| Tempo total reportado | 0,348253 s | 100% (aprox.) |
+- **33/33 verificações de checksum:** 9 testes padrão (três N × 1/2/4 processos); 9 testes com N não divisível por P; e 15 testes com N/K/IT variados, incluindo IT=0 e cenário com P maior que N. O CSV `validacao_mpi.csv` cobre os **9 casos padrão**; os demais foram exibidos no terminal.
+- **33/33 verificações de centroides:** script Python compara todos os centroides da versão MPI com `build/validacao_seq` em 11 cenários × P = 1, 2, 4, tolerâncias `rel_tol=1e-12` e `abs_tol=1e-10`. **Maior erro absoluto relatado: 0.0** para coordenadas impressas em `%.17g`.
+- Checksums da bateria principal: N=100.000 → `8090.3550`; N=1.000.000 → `8109.0037`; N=5.000.000 → `8099.9055`.
 
-A atribuição foi o maior *hotspot* **nessa execução**. As duas fases podem ser paralelizadas, mas o recálculo exige redução/sincronização; iterações consecutivas são dependentes porque os novos centroides alimentam a próxima atribuição. A proporção do hotspot **não deve ser automaticamente tratada como a fração paralelizável exata para Amdahl**.
+## 6. Experimentos realizados e resultados
 
-### Experimentos OpenMP originais
+### 6.1 Perfilamento sequencial (uma medição)
 
-Protocolo: N = 100.000, 1.000.000 e 5.000.000; K = 8; IT = 20; um aquecimento descartado por configuração e cinco execuções medidas; sequencial intercalado com OpenMP 1, 2 e 4 threads.
+Para N = 1.000.000, K = 8 e IT = 20, a atribuição consumiu `0,304297 s` (**87,38%**) e o recálculo `0,043902 s` (**12,61%**) de `0,348253 s` totais reportados. Essas porcentagens descrevem *hotspots observados*, **não** a fração serial exata para a Lei de Amdahl.
 
-| N | Sequencial médio | OMP 1 médio | OMP 2 médio | OMP 4 médio |
+### 6.2 Escalabilidade forte
+
+Protocolo por campanha: N = 100.000, 1.000.000, 5.000.000; K = 8; IT = 20; uma execução descartada de aquecimento por configuração; cinco medições por configuração. Em ambas as campanhas, cada rodada mediu também o baseline sequencial. **OpenMP e MPI foram coletados em campanhas diferentes.**
+
+| N | Seq. da campanha OMP (s) | OpenMP 1 (s) | OpenMP 2 (s) | OpenMP 4 (s) |
 |---:|---:|---:|---:|---:|
-| 100.000 | 0,050713 s | 0,051308 s | 0,075015 s | 0,101940 s |
-| 1.000.000 | 0,527968 s | 0,464654 s | 0,638230 s | 0,539434 s |
-| 5.000.000 | 2,243186 s | 2,297215 s | 2,107286 s | 1,805006 s |
+| 100.000 | 0,050713 | 0,051308 | 0,075015 | 0,101940 |
+| 1.000.000 | 0,527968 | 0,464654 | 0,638230 | 0,539434 |
+| 5.000.000 | 2,243186 | 2,297215 | 2,107286 | 1,805006 |
 
-Para N = 5.000.000 e quatro threads, *speedup* com base na média sequencial foi aproximadamente **1,243×**, com eficiência **31,1%**. O ganho é observado nessa amostra; outras configurações foram instáveis e há variações expressivas entre repetições. Não alegar que uma causa específica do ruído foi demonstrada.
+| N | Seq. da campanha MPI (s) | MPI 1 (s) | MPI 2 (s) | MPI 4 (s) |
+|---:|---:|---:|---:|---:|
+| 100.000 | 0,103463 | 0,092206 | 0,104039 | 0,310480 |
+| 1.000.000 | 0,691980 | 0,669102 | 0,367687 | 0,431920 |
+| 5.000.000 | 2,341218 | 2,316310 | 2,050126 | 1,469368 |
 
-Arquivos de evidência: `resultados/resultados_openmp.csv` (60 linhas de dados), `resultados/resumo_openmp.csv` e nove PNGs em `resultados/graficos/`. O gerador adaptado `scripts/gerar_graficos_openmp.py` foi executado na nova estrutura e produziu 10 arquivos em `resultados/graficos_teste/` (9 PNG + `resumo_openmp.csv`), preservando os originais.
+- OpenMP N=5.000.000/4 threads: *speedup* **1,243×** e eficiência **31,1%** relativamente ao sequencial **da campanha OpenMP**.
+- MPI N=1.000.000/2 processos: *speedup* **1,882×**, eficiência **94,1%** relativamente ao sequencial **da campanha MPI**.
+- MPI N=5.000.000/4 processos: *speedup* **1,593×**, eficiência **39,8%**, também com sua própria referência sequencial.
+- A comparação exploratória dos **tempos absolutos** indica OpenMP menor em N=100.000 para 1/2/4 trabalhadores; MPI menor em N=1.000.000 e 5.000.000 com 2/4. A comparação **não está controlada entre campanhas** e não sustenta afirmação causal ou ranking definitivo.
+- **Não comparar diretamente speedups ou eficiências calculados com baselines sequenciais diferentes.** Os gráficos comparativos existem como visualização preliminar, e devem ser acompanhados desta ressalva.
 
-### Scripts de medição
+Arquivos: `resultados/resultados_openmp.csv`, `resultados/resumo_openmp.csv`, `resultados/resultados_mpi.csv`, `resultados/resumo_mpi.csv`, `resultados/comparacao_openmp_mpi.csv`, além de 9 PNG OpenMP originais, 9 PNG MPI fortes e 9 comparativos.
 
-- `scripts/medir_baseline.sh`: alterado para localizar `build/10_kmeans_base` e produzir `resultados/baseline_reteste.csv`. **`bash -n`: aprovado; reteste completo não executado.**
-- `scripts/medir_openmp.sh`: alterado para localizar executáveis em `build/` e produzir `resultados/resultados_openmp_reteste.csv`. **`bash -n`: aprovado; reteste completo não executado.**
-- `scripts/gerar_graficos_openmp.py`: adaptado para CSV padrão em `resultados/resultados_openmp.csv` e saída opcional; **execução de teste aprovada**.
+### 6.3 Escalabilidade fraca MPI
 
-Os arquivos originais (`baseline.csv`, `resultados_openmp.csv` e nove PNG) não devem ser sobrescritos sem cópia e justificativa.
+Carga nominal fixa em **1.000.000 de pontos por processo**: P=1 → N=1.000.000; P=2 → N=2.000.000; P=4 → N=4.000.000. Um aquecimento e cinco medições por configuração, validadas por checksum contra execução sequencial equivalente.
 
-## 6. Implementação e validação OpenMP
+| Processos | N total | Tempo médio (s) | Desvio-padrão amostral (s) | Eficiência fraca |
+|---:|---:|---:|---:|---:|
+| 1 | 1.000.000 | 0,670650 | 0,243925 | 100,0% |
+| 2 | 2.000.000 | 0,814082 | 0,120106 | 82,4% |
+| 4 | 4.000.000 | 1,661666 | 0,191052 | 40,4% |
 
-A implementação atual realiza:
+Eficiência fraca calculada como `100 × T(P=1,N=1.000.000) / T(P,N=P×1.000.000)` usando **médias da mesma campanha**. O aumento de P não manteve o tempo constante: com P=4, a média ficou ~2,48× a de P=1. Houve variabilidade considerável; hipóteses como contenção, sincronização e ruído do WSL2 **não foram isoladas experimentalmente**.
 
-1. Atribuição com `#pragma omp parallel for schedule(static)`; cada thread escreve o rótulo dos pontos que processa.
-2. Recálculo em acumuladores privados por thread (`sx_local`, `sy_local`, `cnt_local`) para evitar condições de corrida.
-3. Combinação sequencial das somas e contagens e atualização dos centroides antes da próxima iteração.
+Arquivos: `resultados/escalabilidade_fraca_mpi.csv` (15 medições), `resultados/resumo_escalabilidade_fraca_mpi.csv`, `resultados/graficos_mpi/escalabilidade_fraca_mpi.png`. **Escalabilidade fraca OpenMP não foi medida nesta fase.**
 
-Após a reorganização, foi criado e **executado** `scripts/validar_openmp.sh`. Ele usa os executáveis instrumentados `build/validacao_seq` e `build/validacao_omp`, compara as coordenadas finais dos centroides impressas com 17 algarismos significativos e grava `resultados/validacao_openmp.csv`.
+## 7. Metodologia e limitações importantes
 
-**Resultado confirmado: 9/9 testes aprovados** — para cada N = 100.000, 1.000.000 e 5.000.000, com 1, 2 e 4 threads; sempre K = 8 e IT = 20.
+1. O tempo das versões sequencial, OpenMP e MPI cobre o laço iterativo, não o custo total de geração/distribuição, inicialização MPI ou lançamento de processos. O overhead de comunicação **dentro** das iterações MPI é contabilizado.
+2. A amostragem tem apenas cinco repetições por cenário e apresentou **dispersão expressiva**; médias não descrevem necessariamente um ganho estável.
+3. As campanhas OpenMP e MPI têm baselines de referência diferentes (por exemplo, N=100.000: `0,050713 s` versus `0,103463 s`), portanto speedup e eficiência das duas campanhas **não são diretamente comparáveis**. Fazer reteste intercalado e sob condições equivalentes, se possível.
+4. WSL2, disponibilidade de CPU e configuração do OpenMPI devem constar do relatório; verificar versão do Ubuntu, CPU, memória e carga concorrente antes de apresentar conclusões fortes.
+5. A escalabilidade fraca fixa o número de pontos por processo, mas as reduções coletivas e a distribuição geral do problema ainda podem afetar a duração medida.
+6. A análise de Amdahl ainda necessita explicitar premissas sobre a fração sequencial; não identificar automaticamente os 87,38% de tempo de atribuição como fração paralelizável total.
 
-Esta evidência cobre **as configurações testadas**, não uma prova universal para todas as entradas. Os `.txt` legados da pasta `validacao/` não devem ser apresentados como registro separado de todos os nove testes, pois foram sobrescritos nos procedimentos manuais anteriores.
+## 8. Estado do Git e publicação
 
-## 7. GitHub: situação e cautelas
+- Repositório remoto: `marcusvgarcia-maker/Projeto---PP`.
+- `organizacao/kmeans` contém a reorganização, registrada no commit `22d9583`. O **PR #18 foi mesclado à `main` em 10/11/2026**, com commit de merge `1d1a7fe`. A ancestralidade foi confirmada por `git merge-base --is-ancestor`.
+- Branch local **`desenvolvimento/mpi`**, criada a partir de `organizacao/kmeans`. O último `git status --short --branch` confirmou esta branch e exibiu `Makefile`, `README.md` e `AGENTS.md` modificados, além de diretórios/arquivos MPI, relatórios e gráficos **não rastreados**. Nenhum commit MPI foi relatado ainda.
+- **Não executar Git no diretório antigo do Windows**, associado a outro repositório remoto. Usar `cd ~/projeto_pp_integracao`.
+- Evitar `push --force` e integração automática de branches históricas sem ancestral comum. A sequência planejada é terminar a documentação, revisar e commitar MPI em sua branch, e publicar/abrir PR respeitando a dependência de revisão da organização.
 
-O repositório remoto foi consultado antes da reorganização local. Foram identificadas as branches `main`, `baseline_perfilamento` e `openmp`. A `main` ainda tinha o baseline e um README genérico, enquanto códigos, dados e gráficos de desenvolvimento estavam nas outras branches. Comparações de `main` com as branches de desenvolvimento retornaram ausência de ancestral comum; portanto, **evitar merge automático entre essas histórias**.
+## 9. Pendências prioritárias
 
-Uma tentativa de criar branch pelo conector GitHub foi recusada com `403 Resource not accessible by integration`. **Não foi realizada publicação pelo assistente.** O trabalho de organização e os testes acima foram executados **localmente** pelo desenvolvedor. Antes de publicar, verificar `git status`, branch atual, arquivos ignorados, regras de `.gitignore` e mudanças não confirmadas; preparar integração seletiva em branch nova e revisão cuidadosa.
+1. Atualizar **este documento**, `docs/EXPERIMENTOS.md`, `docs/ARQUITETURA.md` e `docs/PROXIMOS_PASSOS.md` de acordo com os arquivos reais; manter README/AGENTS consistentes.
+2. Verificar executabilidade e sintaxe dos novos scripts; revisar `git diff --check` **depois de adicionar os arquivos ao índice**, pois comandos `git diff` comuns não verificam arquivos não rastreados.
+3. Realizar, se possível, uma **campanha comparativa intercalada e controlada** entre sequencial, OpenMP e MPI; decidir se a escalabilidade fraca OpenMP é necessária para a entrega.
+4. Preparar uma análise teórica justificada da **Lei de Amdahl** e discutir diferenças para medidas empíricas, comunicação e sincronização.
+5. Revisar `AUTORES.md`, requisitos do professor, máquina de teste e material para demonstração/arguição cruzada.
+6. Preparar **commit na branch `desenvolvimento/mpi`**, publicar e abrir PR após coordenar a integração/revisão da reorganização. Não mesclar ou publicar mudanças de terceiros sem alinhamento com o grupo.
 
-## 8. Prioridades restantes (ordem sugerida)
+## 10. Comandos para retomar
 
-1. **Conferir os arquivos locais e documentação**: nome do `README.md`, preenchimento de `AUTORES.md`, atualizações de `docs/`, `.gitignore` e scripts.
-2. **MPI obrigatório**: implementar `mpi/10_kmeans.cpp`, compilar e validar com 1, 2, 4 processos; tratar distribuição, comunicação coletiva, decomposição e sincronização. Registrar diferenças entre tempo MPI e tempo sequencial.
-3. **Experimentos MPI**: medir, gerar CSV, tempo, *speedup*, eficiência; investigar problema de slots no WSL sem mascarar medições com oversubscription.
-4. **Análise completa**: escalabilidade forte e fraca para ambas as tecnologias, estimativa justificada de Amdahl, discussão de overhead, sincronização e variabilidade.
-5. **Entrega reproduzível**: incluir MPI em `make all`, validar scripts em ambiente limpo, confirmar gráficos, preencher `AUTORES.md`, organizar commits e revisar README.
-6. **Publicação e apresentação**: incorporar organização ao GitHub sem perder as branches anteriores, testar em Linux do laboratório e preparar demonstração ao vivo e arguição cruzada.
-
-## 9. Comandos atuais para retomada
-
-Na raiz `projeto_pp/`, usando terminal Ubuntu:
+Na raiz do clone Ubuntu:
 
 ```bash
-make
-./build/10_kmeans_base 1000000 8 20
-OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE ./build/10_kmeans_omp 1000000 8 20
+cd ~/projeto_pp_integracao
+make clean && make
 bash scripts/validar_openmp.sh
-python3 scripts/gerar_graficos_openmp.py resultados/resultados_openmp.csv resultados/graficos_teste
-```
-
-Para inspecionar os testes de corretude:
-
-```bash
-cat resultados/validacao_openmp.csv
-```
-
-Para inspecionar a situação do Git, sem alterá-la:
-
-```bash
+bash scripts/validar_mpi.sh
+python3 scripts/validar_centroides_mpi.py
+python3 scripts/analisar_mpi.py
+python3 scripts/gerar_graficos_mpi.py
+python3 scripts/comparar_openmp_mpi.py
+python3 scripts/analisar_escalabilidade_fraca_mpi.py
 git status --short --branch
-git branch -avv
 ```
 
-## 10. Handoff — encerramento da etapa de validação/documentação
+**Cuidado:** alguns scripts de validação e análise reescrevem seus CSVs/gráficos de destino ao executar. Preserve os artefatos históricos antes de qualquer reteste. Para repetir medições, executar os scripts `medir_*.sh` conscientemente e usar novos nomes de saída se precisar manter campanhas anteriores.
 
-- **Estado comprovado:** Makefile compilou cinco alvos; baseline e OpenMP executaram; nove comparações automáticas de centroides passaram; gerador de gráficos adaptado produziu 10 arquivos de teste; `AGENTS.md` atualizado e verificado.
-- **Atualização de documentação em andamento:** este arquivo (`docs/ESTADO_ATUAL.md`) foi preparado como substituto. A substituição deve ser confirmada no ambiente local. Revisar posteriormente `docs/ARQUITETURA.md`, `docs/EXPERIMENTOS.md`, `docs/PROXIMOS_PASSOS.md`.
-- **Não confirmado:** substituição final do README, cadastro real dos autores, execução completa dos scripts de medição adaptados, sincronização com GitHub.
-- **Tarefa imediata:** copiar este arquivo para `docs/ESTADO_ATUAL.md` e conferir seu cabeçalho; em seguida, atualizar `docs/PROXIMOS_PASSOS.md` e demais documentos sem inventar tarefas concluídas.
-- **Próxima frente técnica principal:** MPI, ainda não salvo/testado na pasta local confirmada.
+## 11. Handoff
+
+**Confirmado até 10/11/2026:** seis compilações; MPI implementado; corretude OpenMP 9/9 e MPI centroides 33/33; MPI forte (60 medições), fraca (15 medições), gráficos e comparação preliminar; README e AGENTS locais atualizados. **Pendente:** documentação restante, revisão do código/scripts, Amdahl, controle de comparabilidade, commit/PR MPI e testes de entrega. Este documento foi instalado localmente e sua presença foi confirmada em 10/11/2026.
