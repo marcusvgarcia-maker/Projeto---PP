@@ -1,8 +1,9 @@
 # Campanha conjunta no Docker e estimativa de Amdahl
 
-Preparada em 11/11/2026 para execucao pelo grupo. A campanha completa ainda
-precisa ser executada na maquina do aluno. Os testes tecnicos do pacote em outro
-executor nao sao resultados experimentais dessa maquina.
+Campanha executada pelo grupo em 11/11/2026, commit 66e2e16.
+Foram recebidos e conferidos 105 registros fortes, 30 fracos e 15 de perfilamento.
+A analise final esta em RESULTADOS_FINAIS_DOCKER.md. Este documento preserva o
+protocolo e permite novas campanhas independentes.
 
 ## Estado de entrada confirmado pelo aluno
 
@@ -99,8 +100,8 @@ automaticamente como toda a fracao paralelizavel.
 
 ## Fechamento da entrega
 
-Depois de executar a campanha, revisar RESUMO.md e os graficos, completar a
-discussao critica e atualizar os documentos principais com os numeros reais.
+A campanha foi recebida e revisada. A discussao critica e os numeros reais
+estao em RESULTADOS_FINAIS_DOCKER.md. Resta registrar e publicar o fechamento.
 Publicar os scripts, fontes, CSVs, metadados e graficos relevantes na branch
 de finalizacao e revisar antes da integracao. O prazo informado do Marco 2 e
 12/11/2026; a apresentacao sera em 19 ou 26/11, conforme a escala.

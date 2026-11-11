@@ -1,0 +1,9 @@
+COMANDO: ["mpirun", "--oversubscribe", "--bind-to", "none", "-np", "2", "/lab/build/10_kmeans_mpi", "5000000", "8", "20"]
+RETORNO: 0
+TIMEOUT: False
+TEMPO_PAREDE_S: 1.898269067
+
+STDOUT:
+N=5000000 K=8 it=20  checksum=8099.9055  tempo=1.330066 s
+
+STDERR:

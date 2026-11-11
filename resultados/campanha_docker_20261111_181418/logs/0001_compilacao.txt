@@ -1,0 +1,13 @@
+COMANDO: ["make", "-B", "CXXFLAGS=-O2 -std=c++17", "baseline", "build/validacao_seq", "openmp", "mpi"]
+RETORNO: 0
+TIMEOUT: False
+TEMPO_PAREDE_S: 4.010029684
+
+STDOUT:
+mkdir -p build
+g++ -O2 -std=c++17 sequencial/10_kmeans.cpp -o build/10_kmeans_base
+g++ -O2 -std=c++17 validacao/sequencial.cpp -o build/validacao_seq
+g++ -O2 -std=c++17 -fopenmp openmp/10_kmeans.cpp -o build/10_kmeans_omp
+mpic++ -O2 -std=c++17 mpi/10_kmeans.cpp -o build/10_kmeans_mpi
+
+STDERR:

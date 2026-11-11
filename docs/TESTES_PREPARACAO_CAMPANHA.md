@@ -21,3 +21,12 @@ Nao representa a campanha de desempenho no Docker do aluno.
   existente foi validado no Docker pelo aluno (33/33) antes desta etapa.
 - A execucao completa, os numeros finais de Amdahl e a discussao critica
   permanecem pendentes ate a campanha no Docker do aluno.
+
+
+## Evidência posterior — campanha completa do aluno
+
+Em 11/11/2026 foi recebido o ZIP da campanha no commit 66e2e16.
+O caminho MPI foi executado com sucesso pelo aluno no Docker: 190 subprocessos
+da campanha retornaram zero e não houve timeout. Foram conferidos os 150
+registros medidos, seus logs e hashes. Esta evidência complementa, sem alterar
+retrospectivamente, os testes técnicos de preparação descritos acima.

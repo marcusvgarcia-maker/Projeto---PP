@@ -1,0 +1,9 @@
+COMANDO: ["/lab/build/10_kmeans_omp", "2000000", "8", "20"]
+RETORNO: 0
+TIMEOUT: False
+TEMPO_PAREDE_S: 0.746889957
+
+STDOUT:
+N=2000000 K=8 it=20  checksum=8104.1777  tempo=0.704991 s
+
+STDERR:
