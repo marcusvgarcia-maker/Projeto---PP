@@ -142,5 +142,7 @@ O prazo informado para o Marco 2 foi no dia da apresentação 26/11/2026.
 Eventuais novas solicitações do professor devem ser registradas
 e tratadas em alterações posteriores.
 
+O prazo de entrega do Marco 2 foi prorrogado pelo professor para o dia da apresentação do grupo, em 26/11/2026.
+
 A apresentação será no dia 26/11.
 
