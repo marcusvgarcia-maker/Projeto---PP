@@ -123,8 +123,34 @@ Fontes em sequencial/, openmp/, mpi/, perfilamento/ e validacao/.
 Scripts em scripts/; documentação em docs/; dados e gráficos em resultados/.
 [AUTORES.md](AUTORES.md) declara as frentes técnicas do trio.
 
-O PR #19 integrou MPI à main em d9fb659. A campanha final está identificada
-pelo commit local 66e2e16 em entrega/finalizacao. Na última consulta,
-essa branch ainda não estava publicada. Falta registrar este fechamento,
-publicar/revisar a branch e submeter o link ao professor.
-Marco 2: 12/11/2026. Seminário em 19 ou 26/11, conforme a escala.
+O PR #19 integrou MPI à main em d9fb659.
+
+Posteriormente, a branch entrega/finalizacao concentrou o fechamento
+documental, os resultados experimentais e os ajustes finais do projeto.
+
+O PR #20 integrou essa finalização à branch main.
+
+- Branch de origem: entrega/finalizacao.
+- Pull Request: [PR #20](https://github.com/marcusvgarcia-maker/Projeto---PP/pull/20).
+- Estado: integrado (merged).
+- Commit de integração na main: 35d1005.
+- Commit da campanha experimental: 66e2e16.
+
+A versão integrada à main contém as implementações, os scripts,
+a documentação e os resultados experimentais referentes ao fechamento
+do Marco 2.
+
+### Entrega acadêmica
+
+O repositório contém a implementação das versões sequencial, OpenMP e MPI,
+além da documentação metodológica, dos experimentos e dos resultados.
+
+A confirmação do envio do link do repositório ao professor deve ser
+registrada pelo grupo após a realização efetiva do envio.
+
+### Apresentação
+
+A apresentação e a arguição devem seguir o roteiro disponível em
+[docs/ROTEIRO_DEMONSTRACAO.md](docs/ROTEIRO_DEMONSTRACAO.md).
+
+A data da apresentação será dia 26/11.
