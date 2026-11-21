@@ -94,6 +94,18 @@ python3 scripts/validar_centroides_mpi.py
 O backup fica dentro da pasta montada e permanece no host. Os validadores
 antigos têm destinos fixos; conserve seus relatórios antes de repetir testes.
 
+## Documentação
+
+Os documentos relacionados ao desenvolvimento e à organização
+do projeto estão disponíveis na pasta `docs/`.
+
+| Documento | Descrição |
+|---|---|
+| [Arquitetura](docs/CAMINHO_REAL.md) | Descrição da arquitetura do sistema |
+| [Estado_Atual](docs/CAMINHO_REAL.md) | Requisitos funcionais e não funcionais |
+| [Experimentação](docs/CAMINHO_REAL.md) | Detalhes das experimentos e implementações realizadas |
+| [Resultados finais](docs/CAMINHO_REAL.md) | Procedimentos e resultados dos testes |
+
 ## Campanha final e reprodução
 
 A pasta versionada de referência é
@@ -123,8 +135,45 @@ Fontes em sequencial/, openmp/, mpi/, perfilamento/ e validacao/.
 Scripts em scripts/; documentação em docs/; dados e gráficos em resultados/.
 [AUTORES.md](AUTORES.md) declara as frentes técnicas do trio.
 
-O PR #19 integrou MPI à main em d9fb659. A campanha final está identificada
-pelo commit local 66e2e16 em entrega/finalizacao. Na última consulta,
-essa branch ainda não estava publicada. Falta registrar este fechamento,
-publicar/revisar a branch e submeter o link ao professor.
-Marco 2: 12/11/2026. Seminário em 19 ou 26/11, conforme a escala.
+O PR #19 integrou MPI à `main` em d9fb659.
+
+O PR #20 integrou essa finalização à branch `main`.
+
+As implementações desenvolvidas durante as etapas anteriores foram
+integradas à branch `main` por meio do Pull Request #20.
+
+O commit de integração é `35d1005`.
+
+Atualmente, a branch `main` representa a versão consolidada do projeto,
+contendo as implementações integradas e as alterações da entrega final.
+
+A branch `entrega/final` fez parte do processo de desenvolvimento e
+integração, não representando uma entrega ainda pendente de publicação.
+
+- Branch de origem: entrega/finalizacao.
+- Branch de destino: `main`
+- Pull Request: [PR #20](https://github.com/marcusvgarcia-maker/Projeto---PP/pull/20).
+- Estado: integrado (merged).
+- Commit de integração na main: 35d1005.
+- Commit da campanha experimental: 66e2e16.
+
+Para consultar a versão atualizada do projeto, utilize a branch `main`.
+
+A versão integrada à main contém as implementações, os scripts,
+a documentação e os resultados experimentais referentes ao fechamento
+do Marco 2.
+
+### Entrega acadêmica
+
+O repositório contém a implementação das versões sequencial, OpenMP e MPI,
+além da documentação metodológica, dos experimentos e dos resultados.
+
+A confirmação do envio do link do repositório ao professor deve ser
+registrada pelo grupo após a realização efetiva do envio.
+
+### Apresentação
+
+A apresentação e a arguição devem seguir o roteiro disponível em
+[docs/ROTEIRO_DEMONSTRACAO.md](docs/ROTEIRO_DEMONSTRACAO.md).
+
+A data da apresentação será dia 26/11.

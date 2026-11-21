@@ -1,13 +1,24 @@
 # AGENTS.md — continuidade do projeto K-means
 
-## Estado confirmado em 11/11/2026
+## Estado confirmado em 20/11/2026
 
-Projeto CCO085, IESB 2026/2, problema 10. O PR #19 integrou MPI à main,
-merge d9fb659. O usuário trabalha em ~/projeto_pp_integracao, branch local
-entrega/finalizacao. O commit medido é 66e2e16ab971cdadb98d683c3ce316ef79889af6.
-O fechamento documental está preparado para aplicação e publicação.
-A última consulta GitHub não mostrou a branch entrega/finalizacao; confirmar
-o estado atual antes de qualquer escrita remota.
+Projeto CCO085, IESB 2026/2, problema 10. 
+
+O PR #19 integrou a implementação MPI à branch main,
+no commit d9fb659.
+
+A finalização documental e experimental foi desenvolvida na branch
+entrega/finalizacao e posteriormente integrada à main pelo PR #20.
+
+- Branch de origem: entrega/finalizacao.
+- PR de integração: https://github.com/marcusvgarcia-maker/Projeto---PP/pull/20
+- Estado do PR: integrado (merged).
+- Commit de integração na main: 35d1005.
+- Commit da campanha experimental: 66e2e16.
+
+O fechamento do projeto está publicado na main.
+A branch entrega/finalizacao representa a etapa de desenvolvimento
+que originou essa integração.
 
 Fonte principal: docs/RESULTADOS_FINAIS_DOCKER.md, docs/ESTADO_ATUAL.md,
 docs/EXPERIMENTOS.md e a campanha resultados/campanha_docker_20261111_181418/.
@@ -69,8 +80,18 @@ usado nos speedups principais. Allreduce por iteração entra no tempo MPI.
 
 ## Pendências
 
-Aplicar/registrar o fechamento, publicar a branch e revisar/integrar o PR;
-enviar o link ao professor até 12/11/2026. Preparar demonstração e arguição
-cruzada em 19 ou 26/11. O teste no laboratório não foi confirmado.
-A ausência de um PDF final separado não é falha: o enunciado exige PDF
-de até seis páginas no Marco 1 e repositório/análise documentada no Marco 2.
+- Confirmar se o link do repositório foi efetivamente enviado ao professor.
+- Confirmar se a apresentação e a arguição foram realizadas.
+- Registrar eventuais observações ou correções solicitadas pelo professor.
+- Caso sejam realizadas novas alterações, criar uma nova branch a partir
+  da main atualizada e submeter as mudanças por Pull Request.
+
+O PR #20 já foi integrado. Portanto, não considerar a publicação
+da branch entrega/finalizacao ou a integração do PR como pendências.
+
+O teste no laboratório deve ser considerado pendente somente enquanto
+não houver confirmação de sua realização.
+
+A ausência de um PDF final separado não é necessariamente uma falha:
+o enunciado exige PDF de até seis páginas no Marco 1 e repositório/
+análise documentada no Marco 2.

@@ -100,8 +100,49 @@ automaticamente como toda a fracao paralelizavel.
 
 ## Fechamento da entrega
 
-A campanha foi recebida e revisada. A discussao critica e os numeros reais
-estao em RESULTADOS_FINAIS_DOCKER.md. Resta registrar e publicar o fechamento.
-Publicar os scripts, fontes, CSVs, metadados e graficos relevantes na branch
-de finalizacao e revisar antes da integracao. O prazo informado do Marco 2 e
-12/11/2026; a apresentacao sera em 19 ou 26/11, conforme a escala.
+A campanha experimental foi executada em 11/11/2026 e seus
+resultados foram recebidos, conferidos e documentados.
+
+Os dados, scripts, fontes utilizados, metadados, logs e gráficos
+estão preservados em:
+
+resultados/campanha_docker_20261111_181418/
+
+A discussão dos resultados, incluindo speedup, eficiência,
+escalabilidade fraca, variabilidade e modelo de Amdahl,
+está disponível em:
+
+docs/RESULTADOS_FINAIS_DOCKER.md
+
+### Histórico de publicação
+
+A finalização do projeto foi desenvolvida na branch
+entrega/finalizacao e integrada à main pelo PR #20.
+
+- Pull Request: https://github.com/marcusvgarcia-maker/Projeto---PP/pull/20
+- Estado: integrado (merged).
+- Commit de integração: 35d1005.
+- Commit da campanha experimental: 66e2e16.
+
+O código e a documentação referentes ao fechamento da entrega
+já fazem parte da main.
+
+### Preservação dos experimentos
+
+Os resultados históricos devem ser preservados.
+
+Novas campanhas devem utilizar diretórios exclusivos,
+sem sobrescrever os dados anteriores.
+
+As comparações de desempenho devem considerar o ambiente,
+a configuração dos workers, a variabilidade das medições
+e o recorte temporal utilizado.
+
+O prazo informado para o Marco 2 foi no dia da apresentação 26/11/2026.
+Eventuais novas solicitações do professor devem ser registradas
+e tratadas em alterações posteriores.
+
+O prazo de entrega do Marco 2 foi prorrogado pelo professor para o dia da apresentação do grupo, em 26/11/2026.
+
+A apresentação será no dia 26/11.
+
