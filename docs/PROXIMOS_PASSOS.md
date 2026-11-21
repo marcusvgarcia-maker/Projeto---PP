@@ -42,7 +42,7 @@ sua realização efetiva.
 
 Consultar [ROTEIRO_DEMONSTRACAO.md](ROTEIRO_DEMONSTRACAO.md).
 
-- [x] Confirmar a data e horário da apresentação.
+- [x] Data da apresentação: confirmada, caso seja realmente 26/11/2026.
 - [ ] Confirmar a realização de testes no laboratório, caso aplicável.
 - [ ] Ensaiar a execução do baseline sequencial.
 - [ ] Ensaiar a execução OpenMP.
@@ -50,6 +50,7 @@ Consultar [ROTEIRO_DEMONSTRACAO.md](ROTEIRO_DEMONSTRACAO.md).
 - [ ] Preparar a explicação dos gráficos de speedup e eficiência.
 - [ ] Revisar o modelo de Amdahl e suas limitações.
 - [ ] Preparar todos os integrantes para a arguição individual.
+- [x] Horário da apresentação: 8h ás 11h.
 
 ## Registro de auditoria — 11/11/2026
 
