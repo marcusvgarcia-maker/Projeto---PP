@@ -1,148 +1,231 @@
 # Campanha conjunta no Docker e estimativa de Amdahl
 
-Campanha executada pelo grupo em 11/11/2026, commit 66e2e16.
-Foram recebidos e conferidos 105 registros fortes, 30 fracos e 15 de perfilamento.
-A analise final esta em RESULTADOS_FINAIS_DOCKER.md. Este documento preserva o
-protocolo e permite novas campanhas independentes.
+Este documento descreve o protocolo utilizado na campanha experimental de K-means executada em 11/11/2026 e orienta a reprodução de novas campanhas independentes.
 
-## Estado de entrada confirmado pelo aluno
+A campanha original foi executada no commit `66e2e16`, com 105 medições fortes, 30 fracas e 15 de perfilamento. Seus resultados foram conferidos e estão preservados no repositório.
 
-- Branch local: entrega/finalizacao, commit 852af1d; arvore de trabalho limpa.
-- Dockerfile, docker-compose.yml e regras de exclusao registrados nesse commit.
-- MPI ja integrado a main pelo PR 19; commit de merge d9fb659.
-- Docker: 4 CPUs visiveis; imagem Ubuntu 24.04.5 LTS.
-- CPU informada: Intel Core i5-5300U, 2 nucleos e 4 processadores logicos.
-- Memoria total informada pelo Linux: 8069680 kB, cerca de 7,70 GiB.
-  Esse valor descreve o ambiente Linux; nao identifica a RAM fisica do Windows
-  nem substitui um eventual limite de memoria do conteiner.
-- G++ 13.3.0, Open MPI 4.1.6, Matplotlib 3.6.3.
-- Seis executaveis compilados no conteiner.
-- OpenMP: 9/9 comparacoes de centroides aprovadas.
-- MPI: 33/33 comparacoes aprovadas, maior erro absoluto 0,0.
+A análise final está disponível em [RESULTADOS_FINAIS_DOCKER.md](RESULTADOS_FINAIS_DOCKER.md).
 
-## Arquivos novos
+## 1. Registro do ambiente da campanha original
 
-- scripts/medir_campanha_docker.py: coleta conjunta e metadados.
-- scripts/analisar_campanha_docker.py: estatisticas, graficos e modelo de Amdahl.
-- perfilamento/10_kmeans_amdahl.cpp: copia instrumentada adicional do sequencial.
+As informações abaixo representam o ambiente utilizado na preparação e execução da campanha de 11/11/2026. Não devem ser interpretadas como uma descrição do ambiente atual do aluno.
 
-O baseline e as implementacoes OpenMP/MPI permanecem inalterados.
-Os arquivos historicos de resultados nao sao sobrescritos.
+- Branch utilizada: `entrega/finalizacao`.
+- Commit de referência inicial: `852af1d`.
+- Dockerfile, docker-compose.yml e regras de exclusão registrados nesse commit.
+- MPI integrado à `main` pelo PR #19, commit de merge `d9fb659`.
+- Docker: quatro CPUs visíveis no ambiente.
+- Imagem: Ubuntu 24.04.5 LTS.
+- CPU informada: Intel Core i5-5300U, dois núcleos físicos e quatro processadores lógicos.
+- Memória visível no Linux: 8.069.680 kB, aproximadamente 7,70 GiB.
+- G++ 13.3.0.
+- Open MPI 4.1.6.
+- Matplotlib 3.6.3.
+- Seis executáveis compilados na preparação original da campanha.
+- OpenMP: 9/9 comparações individuais de centroides aprovadas.
+- MPI: 33/33 comparações aprovadas, com maior erro absoluto de 0,0.
 
-## Execucao
+A memória informada pelo Linux representa a memória visível naquele ambiente. Não identifica necessariamente a RAM física instalada no Windows nem substitui um eventual limite de memória do contêiner.
 
-Copie os arquivos para a raiz do projeto, respeitando as subpastas do pacote.
-Registre as mudancas reais na branch de finalizacao antes da campanha.
-Dentro do conteiner, com a pasta de trabalho em /lab:
+Posteriormente, o alvo `amdahl` foi incorporado ao Makefile principal, fazendo com que o `make` padrão passasse a gerar sete executáveis.
 
-~~~bash
-python3 scripts/medir_campanha_docker.py
-~~~
+## 2. Componentes utilizados na campanha
 
-O script recompila os programas utilizados com -O2 -std=c++17.
-OpenMP recebe -fopenmp pelo Makefile. O MPI usa o compilador do Makefile.
-O novo perfilador e compilado separadamente pelo coletor; nao substitui o
-perfilador historico. Matplotlib e necessario para a analise automatica.
+Os principais arquivos utilizados foram:
 
-Antes da coleta, conecte o computador a energia e encerre trabalhos concorrentes
-que possam afetar as medicoes. Registre qualquer condicao que nao possa controlar.
+- `scripts/medir_campanha_docker.py`: coleta conjunta das medições e geração de metadados.
+- `scripts/analisar_campanha_docker.py`: cálculo das estatísticas, geração de gráficos e estimativa de Amdahl.
+- `perfilamento/10_kmeans_amdahl.cpp`: cópia instrumentada adicional do programa sequencial.
 
-## Protocolo padrao
+O baseline original e as implementações OpenMP e MPI foram preservados.
 
-- Forte: N=100000,1000000,5000000; K=8; IT=20.
-- Um sequencial e OpenMP/MPI com 1, 2 e 4 workers na mesma campanha.
-- Cinco rodadas medidas e um aquecimento descartado por configuracao.
-- Ordem das variantes embaralhada em cada rodada, com semente registrada.
-- Total forte: 105 registros medidos.
-- Fraca: N=1000000*workers, K=8, IT=20, para OpenMP e MPI.
-  Sao 30 registros medidos, com referencia propria de cada modelo em worker 1.
-- Perfilamento: 15 registros medidos, mais aquecimentos e verificacao previa
-  dos centroides do perfilador para os tres tamanhos.
-- Tempos principais: apenas as iteracoes reportadas pelo programa.
-- A duracao externa de cada subprocesso e registrada separadamente.
-- OMP_DYNAMIC=FALSE, OMP_PROC_BIND=FALSE; GOMP_CPU_AFFINITY removida dos subprocessos.
-- MPI: --oversubscribe --bind-to none. Essas escolhas ficam nos metadados.
-  O experimento usa processos na mesma maquina; nao comprova desempenho em cluster.
+Os arquivos históricos de resultados não foram sobrescritos.
 
-## Saidas
+## 3. Reprodução de uma nova campanha
 
-Cada execucao cria uma pasta NOVA com data em resultados/campanha_docker_DATA.
-Se um destino informado ja existir, o script recusa sobrescreve-lo.
+A campanha descrita neste documento já foi executada. Os procedimentos desta seção destinam-se à realização de novas campanhas independentes.
 
-Os arquivos principais sao forte.csv, fraca.csv, perfilamento.csv e metadados.json.
-A pasta logs guarda comandos e saidas; fontes guarda os fontes efetivamente usados.
-analise contem resumos CSV, graficos e RESUMO.md. Ao final, um ZIP com sufixo
-_para_enviar.zip e criado ao lado da pasta da campanha.
+Para novas alterações no projeto, utilizar a `main` atualizada como ponto de partida, seguindo as orientações de organização e revisão por Pull Request descritas no `README.md` e no `AGENTS.md`.
 
-Checksums inconsistentes, comandos com erro, timeout e amostras incompletas
-impedem a conclusao automatica. Dados parciais permanecem identificados como tais.
+Antes de iniciar uma nova coleta:
 
-## Hipotese de Amdahl
+1. Verificar o estado do repositório e dos arquivos utilizados.
+2. Preparar o ambiente Docker.
+3. Confirmar a disponibilidade dos compiladores, bibliotecas e ferramentas necessárias.
+4. Conectar o computador à energia.
+5. Encerrar trabalhos concorrentes que possam afetar as medições.
+6. Registrar as condições de execução que possam influenciar os resultados.
 
-Para cada N:
+Com a pasta de trabalho do contêiner em `/lab`, executar:
 
-~~~text
-f = (tempo medio de atribuicao + tempo medio de acumulacao) / tempo total medio
+```bash
+python3 scripts/medir_campanha_docker.py --observacoes "descreva as condicoes reais"
+```
+
+O parâmetro `--observacoes` permite registrar as condições reais da nova coleta.
+
+O script recompila os programas utilizados com `-O2 -std=c++17`.
+
+- OpenMP utiliza `-fopenmp` pelo Makefile.
+- MPI utiliza o compilador configurado no Makefile.
+- O perfilador adicional é compilado separadamente pelo coletor.
+- Matplotlib é necessário para a análise automática e geração dos gráficos.
+
+O novo perfilador não substitui o perfilador histórico.
+
+## 4. Protocolo experimental
+
+### 4.1. Escalabilidade forte
+
+Configurações utilizadas:
+
+- N: 100.000, 1.000.000 e 5.000.000 pontos.
+- K: 8 clusters.
+- IT: 20 iterações.
+- Versões: sequencial, OpenMP e MPI.
+- Workers: 1, 2 e 4 para OpenMP e MPI.
+- Repetições: cinco rodadas medidas por configuração.
+- Aquecimento: uma execução descartada por configuração.
+
+A ordem das variantes foi embaralhada em cada rodada, utilizando uma semente registrada nos metadados.
+
+O total foi de 105 medições:
+
+- 21 configurações.
+- Cinco repetições por configuração.
+
+### 4.2. Escalabilidade fraca
+
+Configurações utilizadas:
+
+- N = 1.000.000 × número de workers.
+- K = 8.
+- IT = 20.
+- Versões: OpenMP e MPI.
+- Workers: 1, 2 e 4.
+- Repetições: cinco por configuração.
+
+Cada modelo utiliza sua própria referência com um worker.
+
+O total foi de 30 medições.
+
+### 4.3. Perfilamento e Amdahl
+
+Foram realizadas 15 medições de perfilamento, distribuídas em três tamanhos de entrada e cinco repetições por tamanho.
+
+Houve aquecimentos e verificação prévia dos centroides do perfilador em relação ao sequencial.
+
+O perfilamento separa duas fases:
+
+- Atribuição: associação de cada ponto ao centroide mais próximo.
+- Acumulação: soma das coordenadas e contagem de pontos de cada cluster.
+
+As duas fases são potencialmente paralelizáveis.
+
+### 4.4. Configurações de execução
+
+- Tempos principais: somente as iterações reportadas pelo programa.
+- Duração externa: registrada separadamente para cada subprocesso.
+- OpenMP: `OMP_DYNAMIC=FALSE` e `OMP_PROC_BIND=FALSE`.
+- `GOMP_CPU_AFFINITY` removida dos subprocessos.
+- MPI: `--oversubscribe --bind-to none`.
+- Processos MPI executados na mesma máquina.
+
+As escolhas de configuração ficam registradas nos metadados.
+
+A campanha representa execução em uma única máquina. Portanto, não comprova desempenho em um cluster distribuído.
+
+## 5. Saídas e preservação dos dados
+
+Cada nova execução cria uma pasta exclusiva, com data, dentro de `resultados/`.
+
+O padrão de organização é:
+
+`resultados/campanha_docker_DATA/`
+
+Se o destino informado já existir, o script recusa sobrescrevê-lo.
+
+Os arquivos principais são:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `forte.csv` | Medições de escalabilidade forte |
+| `fraca.csv` | Medições de escalabilidade fraca |
+| `perfilamento.csv` | Resultados do perfilamento |
+| `metadados.json` | Configurações e informações do ambiente |
+
+As demais pastas são:
+
+- `logs/`: comandos executados e respectivas saídas.
+- `fontes/`: cópias dos fontes efetivamente utilizados.
+- `analise/`: resumos CSV, gráficos e `RESUMO.md`.
+
+Ao final, um ZIP com sufixo `_para_enviar.zip` é criado ao lado da pasta da campanha.
+
+Checksums inconsistentes, comandos com erro, timeouts ou amostras incompletas impedem a conclusão automática. Os dados parciais permanecem identificados como tais.
+
+Os resultados históricos devem ser preservados. Nenhuma nova campanha deve sobrescrever os dados anteriores.
+
+## 6. Hipótese de Amdahl
+
+A estimativa de Amdahl utiliza os tempos médios obtidos pelo perfilador sequencial instrumentado.
+
+Para cada tamanho de entrada:
+
+```text
+f = (tempo médio de atribuição + tempo médio de acumulação) / tempo médio total perfilado
+
 S(P) = 1 / ((1-f) + f/P)
+
 S(infinito) = 1/(1-f)
-~~~
+```
 
-Os dois lacos sobre pontos sao potencialmente paralelos. A parcela restante
-inclui inicializacao dos acumuladores, atualizacao dos centroides, desalocacao,
-controle e instrumentacao. A estimativa e um modelo ideal do codigo sequencial
-instrumentado, sujeito ao custo do proprio perfilamento.
+Em que:
 
-O modelo nao mede a fracao serial efetiva do OpenMP ou do MPI. Nao incorpora
-automaticamente o custo das reducoes, criacao de threads, contencao de memoria
-ou efeitos de SMT. As diferencas entre modelo e medicoes exigem discussao.
-O percentual historico de 87,38% era somente atribuicao e nao deve ser usado
-automaticamente como toda a fracao paralelizavel.
+- `f` representa a fração estimada do tempo do perfilador correspondente às duas fases potencialmente paralelizáveis.
+- `P` representa o número de workers.
+- `S(P)` representa o speedup ideal estimado para P workers.
+- `S(infinito)` representa o limite formal do modelo quando o número de workers tende ao infinito.
 
-## Fechamento da entrega
+A parcela restante inclui inicialização dos acumuladores, atualização dos centroides, desalocação, controle e instrumentação.
 
-A campanha experimental foi executada em 11/11/2026 e seus
-resultados foram recebidos, conferidos e documentados.
+Essa estimativa é um modelo ideal do código sequencial instrumentado e está sujeita ao custo do próprio perfilamento.
 
-Os dados, scripts, fontes utilizados, metadados, logs e gráficos
-estão preservados em:
+O modelo não mede diretamente a fração serial efetiva do OpenMP ou MPI. Também não incorpora automaticamente o custo das reduções, criação de threads, contenção de memória ou efeitos de SMT.
 
-resultados/campanha_docker_20261111_181418/
+As diferenças entre o modelo ideal e os resultados medidos precisam ser discutidas.
 
-A discussão dos resultados, incluindo speedup, eficiência,
-escalabilidade fraca, variabilidade e modelo de Amdahl,
-está disponível em:
+O percentual histórico de 87,38% correspondia somente à atribuição em outra execução. Não deve ser utilizado automaticamente como fração paralelizável total.
 
-docs/RESULTADOS_FINAIS_DOCKER.md
+## 7. Fechamento da campanha original
 
-### Histórico de publicação
+A campanha experimental foi executada em 11/11/2026. Seus resultados foram recebidos, conferidos e documentados.
 
-A finalização do projeto foi desenvolvida na branch
-entrega/finalizacao e integrada à main pelo PR #20.
+Os dados, scripts, fontes utilizados, metadados, logs e gráficos estão preservados em:
+
+`resultados/campanha_docker_20261111_181418/`
+
+A discussão dos resultados, incluindo speedup, eficiência, escalabilidade fraca, variabilidade e modelo de Amdahl, está disponível em [RESULTADOS_FINAIS_DOCKER.md](RESULTADOS_FINAIS_DOCKER.md).
+
+### Histórico de integração
+
+A finalização do projeto foi desenvolvida na branch `entrega/finalizacao` e integrada à `main` pelo PR #20.
 
 - Pull Request: https://github.com/marcusvgarcia-maker/Projeto---PP/pull/20
 - Estado: integrado (merged).
-- Commit de integração: 35d1005.
-- Commit da campanha experimental: 66e2e16.
+- Commit de integração: `35d1005`.
+- Commit da campanha experimental: `66e2e16`.
 
-O código e a documentação referentes ao fechamento da entrega
-já fazem parte da main.
+O código e a documentação referentes ao fechamento da entrega fazem parte da `main` desde a integração do PR #20.
 
-### Preservação dos experimentos
+### Resultados e limitações
 
-Os resultados históricos devem ser preservados.
+As comparações de desempenho devem considerar:
 
-Novas campanhas devem utilizar diretórios exclusivos,
-sem sobrescrever os dados anteriores.
+- O ambiente de execução.
+- A configuração e a quantidade de workers.
+- A variabilidade das medições.
+- O recorte temporal utilizado.
+- As limitações de hardware e de memória.
 
-As comparações de desempenho devem considerar o ambiente,
-a configuração dos workers, a variabilidade das medições
-e o recorte temporal utilizado.
-
-O prazo informado para o Marco 2 foi no dia da apresentação 26/11/2026.
-Eventuais novas solicitações do professor devem ser registradas
-e tratadas em alterações posteriores.
-
-O prazo de entrega do Marco 2 foi prorrogado pelo professor para o dia da apresentação do grupo, em 26/11/2026.
-
-A apresentação será no dia 26/11.
-
+Os resultados desta campanha representam as condições registradas em 11/11/2026. Novas medições devem ser tratadas como campanhas independentes, preservando integralmente os dados anteriores.
