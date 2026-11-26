@@ -1,10 +1,11 @@
-/* Baseline 10 — Agrupamento por k-medias (k-means, algoritmo de Lloyd)
+/* K-means de Lloyd — versao paralela com OpenMP (memoria compartilhada)
  * IESB 2026/2 — CCO085 — Prof. Rodrigo Goncalves Pinto
  * Aspecto interessante: fases paralelas alternadas — atribuicao (paralela)
- * e recalculo dos centroides (reducao) — com sincronizacao global a cada passo.
+ * e recalculo dos centroides (reducao com acumuladores privados por thread) —
+ * com barreira implicita entre fases a cada iteracao.
  *
- * Compilar: g++ -O2 -o 10_kmeans 10_kmeans.cpp
- * Executar: ./10_kmeans 1000000 8 20   (pontos; clusters; iteracoes)
+ * Compilar: g++ -O2 -std=c++17 -fopenmp -o build/10_kmeans_omp openmp/10_kmeans.cpp
+ * Executar: OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE OMP_PROC_BIND=FALSE ./build/10_kmeans_omp 1000000 8 20
  */
 #include <cstdio>
 #include <cstdlib>
@@ -36,7 +37,9 @@ int main(int argc, char** argv) {
     for (int j = 0; j < K; j++) { cx[j] = px[j]; cy[j] = py[j]; }  // centroides iniciais
 
     vector<int> rotulo(N, 0);
-    // Acumuladores privados para cada thread
+    // Acumuladores privados por thread, alocados uma unica vez fora do laco principal.
+    // Cada thread escreve apenas na propria linha [tid], eliminando condicoes de corrida
+    // na fase de reducao sem necessidade de #pragma omp atomic ou critical por ponto.
     const int T = omp_get_max_threads();
 
     vector<vector<double>> sx_local(T, vector<double>(K, 0));
@@ -45,7 +48,11 @@ int main(int argc, char** argv) {
 
     double t0 = agora();
     for (int it = 0; it < IT; it++) {
-        // fase 1 — atribuicao
+        // Fase 1 — atribuicao paralela dos pontos aos centroides atuais.
+        // schedule(static) divide blocos contiguos igualmente entre as threads, pois
+        // cada ponto executa o mesmo trabalho (K comparacoes de distancia ao quadrado)
+        // e escreve exclusivamente em rotulo[i]. Ha uma barreira implicita ao final
+        // do #pragma omp parallel for, garantindo todos os rotulos prontos antes da Fase 2.
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < N; i++) {
             double best = 1e18; int bj = 0;
@@ -56,16 +63,18 @@ int main(int argc, char** argv) {
             }
             rotulo[i] = bj;
         }
-        // fase 2 — recalculo paralelo dos centroides
+        // Fase 2 — recalculo paralelo dos centroides (reducao manual em duas etapas)
 
-        // Zerar os acumuladores locais
+        // Zerar os acumuladores privados de cada thread antes da acumulacao
         for (int t = 0; t < T; t++) {
             fill(sx_local[t].begin(), sx_local[t].end(), 0.0);
             fill(sy_local[t].begin(), sy_local[t].end(), 0.0);
             fill(cnt_local[t].begin(), cnt_local[t].end(), 0);
         }
 
-        // Acumulacao paralela sem condicoes de corrida
+        // Acumulacao paralela sem condicoes de corrida: cada thread atualiza apenas
+        // seus proprios vetores (indice tid). A barreira implicita no fim da regiao
+        // paralela assegura que todas as somas parciais estejam concluidas antes da combinacao.
         #pragma omp parallel
         {
             int tid = omp_get_thread_num();
@@ -80,7 +89,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        // Reducao dos resultados parciais
+        // Reducao deterministica das somas parciais por cluster: custo O(T * K)
         for (int j = 0; j < K; j++) {
             double sx = 0.0;
             double sy = 0.0;
@@ -92,7 +101,7 @@ int main(int argc, char** argv) {
                 cnt += cnt_local[t][j];
             }
 
-            // Atualizar o centroide se o cluster nao estiver vazio
+            // Atualizar o centroide apenas se o cluster nao estiver vazio (invariante do baseline)
             if (cnt) {
                 cx[j] = sx / cnt;
                 cy[j] = sy / cnt;
